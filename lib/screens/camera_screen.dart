@@ -98,8 +98,8 @@ class _CameraScreenState extends State<CameraScreen> {
             backgroundColor: Colors.white,
             onPressed: () async {
               try {
+                await _initializeControllerFuture; // Ensure the future is complete before proceeding
                 if (pictureCount < 4) {
-                  await _initializeControllerFuture;
                   final XFile image = await _controller!.takePicture();
                   String overlayImagePath = await mergeImage(image, Assets.overlayImages[overlayIndex]);
                   takePictures.add(overlayImagePath);
