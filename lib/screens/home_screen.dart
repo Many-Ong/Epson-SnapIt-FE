@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'camera_screen.dart';
@@ -7,12 +8,12 @@ class HomeScreen extends StatelessWidget {
   final CameraDescription camera;
   final ApiService apiService = ApiService('http://15.165.196.28');
 
-  HomeScreen({required this.camera});
+  HomeScreen({super.key, required this.camera});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Home Screen')),
+      appBar: AppBar(title: const Text('Home Screen')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -25,12 +26,12 @@ class HomeScreen extends StatelessWidget {
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: Text('User Data'),
+                      title: const Text('User Data'),
                       content: Text(data.toString()),
                       actions: <Widget>[
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          child: Text('OK'),
+                          child: const Text('OK'),
                         ),
                       ],
                     ),
@@ -39,9 +40,9 @@ class HomeScreen extends StatelessWidget {
                   print('Error fetching user data: $e');
                 }
               },
-              child: Text('Fetch User Data'),
+              child: const Text('Fetch User Data'),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -49,7 +50,7 @@ class HomeScreen extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => CameraScreen(camera: camera)),
                 );
               },
-              child: Text('Go to Camera'),
+              child: const Text('Go to Camera'),
             ),
           ],
         ),
