@@ -10,7 +10,7 @@ Widget DisplayPictureScreen({required String imagePath, required BuildContext co
     body: Image.file(File(imagePath)),
     floatingActionButton: Builder(
       builder: (BuildContext context) {
-        return FloatingActionButton(
+        return FloatingActionButton( 
           onPressed: () async {
             await Navigator.of(context).push(
               MaterialPageRoute(
