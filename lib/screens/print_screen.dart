@@ -48,8 +48,13 @@ class PrintScreen extends StatelessWidget {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Image.file(File(imagePath)),
-          SizedBox(height: 20),
+          Flexible(
+            flex: 3,
+            child: Center(
+              child: Image.file(File(imagePath), fit: BoxFit.cover),
+             ),
+          ),
+          // SizedBox(height: 20),
           ElevatedButton(
             onPressed: () async {
               await handlePrint();
