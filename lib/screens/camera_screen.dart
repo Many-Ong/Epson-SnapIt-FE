@@ -1,59 +1,63 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
+
+import 'package:flutter/material.dart' hide Image; // flutter.Image와 충돌을 피하기 위해 hide Image 사용
+import 'package:flutter/material.dart' as flutter;
 import 'package:camera/camera.dart';
+import 'package:flutter/services.dart';
+import 'package:image/image.dart' as img;
+import 'package:snapit/screens/display_picture_screen.dart';
+import 'package:snapit/assets.dart';
 import 'print_screen.dart';
 
-class CameraScreen extends StatefulWidget {
-  final CameraDescription camera;
+class CameraScreen extends StatefulWidget { 
+  final CameraDescription camera; //
 
-  const CameraScreen({required this.camera});
-
+  const CameraScreen({super.key, required this.camera});
   @override
   _CameraScreenState createState() => _CameraScreenState();
-}
+} //확인
 
 class _CameraScreenState extends State<CameraScreen> {
-  CameraController? _controller;
+  CameraController? _controller; 
   late Future<void> _initializeControllerFuture;
   List<CameraDescription> cameras = [];
 
   @override
-  void initState() {
+  void initState() { // 초기화 작업
     super.initState();
     initCamera();
   }
 
   Future<void> initCamera() async {
-    cameras = await availableCameras();
-    CameraDescription frontCamera = cameras.firstWhere(
+    cameras = await availableCameras(); 
+    CameraDescription frontCamera = cameras.firstWhere( // 전면 카메라를 찾음
       (camera) => camera.lensDirection == CameraLensDirection.front,
       orElse: () => cameras.first,
-    );
-    _controller = CameraController(frontCamera, ResolutionPreset.medium);
+    ); // 전면 카메라 없으면 후면 카메라 사용
+    _controller = CameraController(frontCamera, 
+    ResolutionPreset.medium); // 카메라 컨트롤러를 초기화
     _initializeControllerFuture = _controller!.initialize().then((_) {
       if (!mounted) return;
-      setState(() {});
-    }).catchError((error) {
-      print('Error initializing camera: $error');
-    });
-
-    await _controller!.initialize();
+      setState(() {}); // UI 업데이트
+    }). catchError((error) {
+      print('카메라 초기화 중에 에러가 발생했습니다: $error');
+    }); // 
 
     if (!mounted) return;
-    setState(() {});
+    setState(() {}); // UI 상태 업데이트
   }
 
   @override
-  void dispose() {
-    _controller?.dispose();
+  void dispose() { // 카메라 사용이 끝나면 controller를 dispose해야 함 
+    _controller?.dispose(); 
     super.dispose();
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Custom Camera')),
-      body: FutureBuilder<void>(
+      body: FutureBuilder<void>( // FutureBuilder는 Future의 결과에 따라 UI를 업데이트
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
@@ -73,25 +77,51 @@ class _CameraScreenState extends State<CameraScreen> {
           try {
             await _initializeControllerFuture;
             final image = await _controller!.takePicture();
+            String mergedImagePath = await mergeImage(image, Assets.overlayImage1);
+
             if (!mounted) return;
-            await Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => PrintScreen(imagePath: image.path),
-              ),
-            );
+
+            if (mergedImagePath.isNotEmpty) {
+              await Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => DisplayPictureScreen(imagePath: mergedImagePath, context: context),
+                ),
+              );
+            } else {
+              print('이미지 합성에 실패하여 파일이 저장되지 않았습니다.');
+            }
           } catch (e) {
             print(e);
           }
         },
-        child: Icon(Icons.camera_alt),
+        child: const Icon(Icons.camera_alt),
       ),
     );
   }
 
+  Future<String> mergeImage(XFile picture, String overlayAsset) async {
+    File file = File(picture.path);
+
+    if (!file.existsSync()) {
+      print('파일이 존재하지 않습니다');
+      return '';
+    }
+
+    img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
+    //asset에서 설정한 오버레이 이미지를 가져옴 --> 이미지는 asset 폴더에 저장되어 있고, pubspec.yaml에 설정되어 있어야 함
+    ByteData data = await rootBundle.load(overlayAsset);
+    Uint8List bytes = data.buffer.asUint8List(); 
+    img.Image overlayImage = img.decodeImage(bytes)!; 
+    img.copyInto(baseImage, overlayImage, dstX: 0, dstY: 0); // 이미지 합성(overlayImage를 baseImage에 합성
+    String newPath = '${file.parent.path}/merged_${DateTime.now()}.png'; // 새로운 파일 경로
+    File newImageFile = File(newPath)..writeAsBytesSync(img.encodePng(baseImage));
+    print('새로운 이미지가 저장되었습니다: $newPath');
+    return newImageFile.path;
+  }
+
+
   Widget _buildOverlay() {
-    return Align(
-      alignment: Alignment.center,
-      child: Image.asset('assets/camera_test.png'),
-    );
+    return flutter.Image.asset(Assets.overlayImage1);
   }
 }
+

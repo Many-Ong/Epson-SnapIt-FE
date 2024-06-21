@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'screens/home_screen.dart';
+import 'package:snapit/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +13,8 @@ void main() async {
 class MyApp extends StatelessWidget {
   final CameraDescription camera;
 
-  const MyApp({required this.camera});
+  const MyApp({super.key, required this.camera});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
