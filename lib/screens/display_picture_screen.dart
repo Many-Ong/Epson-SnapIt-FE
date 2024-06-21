@@ -16,13 +16,10 @@ class DisplayPictureScreen extends StatelessWidget {
       body: Center(
         child: Container(
           color: Colors.black,
-          child: AspectRatio(
-            aspectRatio: 4 / 3, // Ensure the aspect ratio is the same as the camera
-            child: Image.file(
+          child:Image.file(
               File(imagePath),
               fit: BoxFit.cover, // Ensure the image fits within the bounds without distortion
             ),
-          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
