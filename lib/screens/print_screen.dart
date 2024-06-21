@@ -45,23 +45,34 @@ class PrintScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Print Picture')),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Flexible(
-            flex: 3,
-            child: Center(
-              child: Image.file(File(imagePath), fit: BoxFit.cover),
-             ),
-          ),
-          // SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () async {
-              await handlePrint();
-            },
-            child: Text('Print Picture'),
-          ),
-        ],
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            SizedBox(height: 40),
+            Flexible(
+              flex: 3,
+              child: Center(
+                child: Image.file(File(imagePath), fit: BoxFit.cover),
+              ),
+            ),
+            SizedBox(height: 40),
+            SizedBox(
+              width: 160,
+              height: 46,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await handlePrint();
+                },
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.black, // Set the background color
+                  backgroundColor: Colors.white, // Set the text color
+                ),
+                child: Text('Print Picture!', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

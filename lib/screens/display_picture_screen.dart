@@ -13,16 +13,19 @@ class DisplayPictureScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Display the Picture')),
-      body: Center(
-        child: Container(
-          color: Colors.black,
-          child:Image.file(
-              File(imagePath),
-              fit: BoxFit.cover, // Ensure the image fits within the bounds without distortion
-            ),
+      body: SafeArea(
+        child: Center(
+          child: Container(
+            color: Colors.black,
+            child:Image.file(
+                File(imagePath),
+                fit: BoxFit.cover, // Ensure the image fits within the bounds without distortion
+              ),
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.white,
         onPressed: () async {
           await Navigator.of(context).push(
             MaterialPageRoute(
@@ -30,7 +33,7 @@ class DisplayPictureScreen extends StatelessWidget {
             ),
           );
         },
-        child: Icon(Icons.print),
+        child: Icon(Icons.print, color: Colors.black),
       ),
     );
   }
