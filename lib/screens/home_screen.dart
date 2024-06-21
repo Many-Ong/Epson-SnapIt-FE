@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'camera_screen.dart';
+import 'package:camera/camera.dart';
 
 class HomeScreen extends StatelessWidget {
+  final CameraDescription camera;
   final ApiService apiService = ApiService('http://15.165.196.28');
+
+  HomeScreen({required this.camera});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +46,7 @@ class HomeScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => CameraScreen()),
+                  MaterialPageRoute(builder: (context) => CameraScreen(camera: camera)),
                 );
               },
               child: Text('Go to Camera'),
