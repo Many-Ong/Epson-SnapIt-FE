@@ -53,7 +53,7 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Custom Camera')),
@@ -63,8 +63,21 @@ class _CameraScreenState extends State<CameraScreen> {
           if (snapshot.connectionState == ConnectionState.done) {
             return Stack(
               children: <Widget>[
-                CameraPreview(_controller!),
-                _buildOverlay(),
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: 4 / 3,
+                    child: CameraPreview(_controller!),
+                  ),
+                ),
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: 4 / 3,
+                    child: flutter.Image.asset(
+                      Assets.overlayImage1,
+                      fit: BoxFit.contain, // Maintain the aspect ratio of the overlay image
+                    ),
+                  ),
+                ),
               ],
             );
           } else {
@@ -109,22 +122,43 @@ class _CameraScreenState extends State<CameraScreen> {
 
     img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
     img.Image flippedImage = img.flipHorizontal(baseImage); // 이미지를 수평으로 뒤집음
-    //asset에서 설정한 오버레이 이미지를 가져옴 --> 이미지는 asset 폴더에 저장되어 있고, pubspec.yaml에 설정되어 있어야 함
+
+    // Get the dimensions of the base image
+    int baseWidth = baseImage.width;
+    int baseHeight = baseImage.height;
+
+    // Load the overlay image
     ByteData data = await rootBundle.load(overlayAsset);
     Uint8List bytes = data.buffer.asUint8List();
-    img.Image overlayImage = img.decodeImage(bytes)!; 
-    img.copyInto(flippedImage, overlayImage, dstX: 0, dstY: 0); // 이미지 합성(overlayImage를 baseImage에 합성
-    
-    
-    String newPath = '${file.parent.path}/merged_${DateTime.now()}.png'; // 새로운 파일 경로
-    File newImageFile = File(newPath)..writeAsBytesSync(img.encodePng(flippedImage));
+    img.Image overlayImage = img.decodeImage(bytes)!;
+
+    // Resize the flipped image to match the aspect ratio of 4:3
+    img.Image resizedFlippedImage = img.copyResize(
+      flippedImage,
+      width: 4 * baseHeight ~/ 3,
+      height: baseHeight,
+    );
+
+    // Resize the overlay image to match the aspect ratio of the flipped image
+    img.Image resizedOverlayImage = img.copyResize(
+      overlayImage,
+      width: resizedFlippedImage.width,
+      height: (resizedFlippedImage.width * overlayImage.height / overlayImage.width).round(),
+    );
+
+    // Center the resized overlay image on the flipped image
+    int offsetX = (resizedFlippedImage.width - resizedOverlayImage.width) ~/ 2;
+    int offsetY = (resizedFlippedImage.height - resizedOverlayImage.height) ~/ 2;
+    img.copyInto(resizedFlippedImage, resizedOverlayImage, dstX: offsetX, dstY: offsetY);
+
+    // Save the merged image
+    String newPath = '${file.parent.path}/merged_${DateTime.now()}.png';
+    File newImageFile = File(newPath)..writeAsBytesSync(img.encodePng(resizedFlippedImage));
     print('새로운 이미지가 저장되었습니다: $newPath');
     return newImageFile.path;
   }
-
 
   Widget _buildOverlay() {
     return flutter.Image.asset(Assets.overlayImage1);
   }
 }
-
