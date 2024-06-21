@@ -53,7 +53,7 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Custom Camera')),
@@ -63,8 +63,21 @@ class _CameraScreenState extends State<CameraScreen> {
           if (snapshot.connectionState == ConnectionState.done) {
             return Stack(
               children: <Widget>[
-                CameraPreview(_controller!),
-                _buildOverlay(),
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: 4 / 3,
+                    child: CameraPreview(_controller!),
+                  ),
+                ),
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: 4 / 3,
+                    child: flutter.Image.asset(
+                      Assets.overlayImage1,
+                      fit: BoxFit.contain, // Maintain the aspect ratio of the overlay image
+                    ),
+                  ),
+                ),
               ],
             );
           } else {
@@ -122,9 +135,7 @@ class _CameraScreenState extends State<CameraScreen> {
     return newImageFile.path;
   }
 
-
   Widget _buildOverlay() {
     return flutter.Image.asset(Assets.overlayImage1);
   }
 }
-
