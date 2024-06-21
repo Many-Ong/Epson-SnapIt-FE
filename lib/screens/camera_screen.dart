@@ -1,8 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'print_screen.dart';
 
 class CameraScreen extends StatefulWidget {
+  final CameraDescription camera;
+
+  const CameraScreen({required this.camera});
+
   @override
   _CameraScreenState createState() => _CameraScreenState();
 }
@@ -71,7 +76,7 @@ class _CameraScreenState extends State<CameraScreen> {
             if (!mounted) return;
             await Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) => DisplayPictureScreen(imagePath: image.path),
+                builder: (context) => PrintScreen(imagePath: image.path),
               ),
             );
           } catch (e) {
@@ -87,20 +92,6 @@ class _CameraScreenState extends State<CameraScreen> {
     return Align(
       alignment: Alignment.center,
       child: Image.asset('assets/camera_test.png'),
-    );
-  }
-}
-
-class DisplayPictureScreen extends StatelessWidget {
-  final String imagePath;
-
-  const DisplayPictureScreen({required this.imagePath});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Display the Picture')),
-      body: Image.file(File(imagePath)),
     );
   }
 }

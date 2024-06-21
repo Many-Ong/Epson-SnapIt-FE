@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData.dark(),
-      home: HomeScreen(), // Set HomeScreen as the home screen
+      home: HomeScreen(camera: camera), // Set HomeScreen as the home screen
     );
   }
 }
