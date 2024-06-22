@@ -8,16 +8,18 @@ import 'package:snapit/screens/display_picture_screen.dart';
 import 'package:snapit/assets.dart';
 import 'package:path_provider/path_provider.dart';
 
-class CameraScreen extends StatefulWidget { 
+class CameraScreen extends StatefulWidget {
   final CameraDescription camera;
+  final Color frameColor;
 
-  const CameraScreen({super.key, required this.camera});
+  const CameraScreen({super.key, required this.camera, required this.frameColor});
+
   @override
   _CameraScreenState createState() => _CameraScreenState();
 }
 
 class _CameraScreenState extends State<CameraScreen> {
-  CameraController? _controller; 
+  CameraController? _controller;
   late Future<void> _initializeControllerFuture;
   List<CameraDescription> cameras = [];
   int pictureCount = 0;
@@ -31,7 +33,7 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<void> initCamera() async {
-    cameras = await availableCameras(); 
+    cameras = await availableCameras();
     CameraDescription frontCamera = cameras.firstWhere(
       (camera) => camera.lensDirection == CameraLensDirection.front,
       orElse: () => cameras.first,
@@ -48,11 +50,11 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   void dispose() {
-    _controller?.dispose(); 
+    _controller?.dispose();
     super.dispose();
   }
 
-  // Method to change the overlay image
+    // Method to change the overlay image
   void changeOverlayImage() {
     setState(() {
       overlayIndex = (overlayIndex + 1) % Assets.overlayImages.length;
@@ -62,7 +64,7 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Custom Camera')),
+      appBar: AppBar(title: const Text('Camera')),
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
@@ -107,7 +109,7 @@ class _CameraScreenState extends State<CameraScreen> {
                   pictureCount++;
 
                   if (pictureCount == 4) {
-                    String mergedImagePath = await mergeFourImages(takePictures, Colors.blue.shade200);
+                    String mergedImagePath = await mergeFourImages(takePictures, widget.frameColor);
                     await Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => DisplayPictureScreen(imagePath: mergedImagePath, context: context),

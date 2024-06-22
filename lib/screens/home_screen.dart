@@ -1,7 +1,7 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'frame_selection_screen.dart';
 import '../services/api_service.dart';
-import 'camera_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final CameraDescription camera;
@@ -26,7 +26,7 @@ class HomeScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => CameraScreen(camera: camera)),
+                    MaterialPageRoute(builder: (context) => FrameSelectionScreen(camera: camera)),
                   );
                 },
                 style: ElevatedButton.styleFrom(
