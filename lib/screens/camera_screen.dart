@@ -9,18 +9,17 @@ import 'package:snapit/screens/display_picture_screen.dart';
 import 'package:snapit/assets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
-import 'display_picture_screen.dart';
 
 class CameraScreen extends StatefulWidget {
   final CameraDescription camera;
   final Color frameColor;
-  final String overlayImageUrl;
+  final List<String> overlayImageUrls;
 
   const CameraScreen(
       {super.key,
       required this.camera,
       required this.frameColor,
-      required this.overlayImageUrl});
+      required this.overlayImageUrls});
 
   @override
   _CameraScreenState createState() => _CameraScreenState();
@@ -32,6 +31,7 @@ class _CameraScreenState extends State<CameraScreen> {
   List<CameraDescription> cameras = [];
   int pictureCount = 0;
   List<String> takePictures = [];
+  int overlayIndex = 0; // New variable to keep track of the overlay image index
 
   @override
   void initState() {
@@ -61,6 +61,13 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
+  // Method to change the overlay image
+  void changeOverlayImage() {
+    setState(() {
+      overlayIndex = (overlayIndex + 1) % widget.overlayImageUrls.length;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -74,16 +81,16 @@ class _CameraScreenState extends State<CameraScreen> {
                 Center(
                   child: AspectRatio(
                     aspectRatio: 4 / 3,
-                    child: CameraPreview(_controller!),
+                    child: flutter.Image.network(
+                      widget.overlayImageUrls[overlayIndex],
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
                 Center(
                   child: AspectRatio(
                     aspectRatio: 4 / 3,
-                    child: flutter.Image.network(
-                      widget.overlayImageUrl,
-                      fit: BoxFit.cover,
-                    ),
+                    child: CameraPreview(_controller!),
                   ),
                 ),
               ],
@@ -103,9 +110,10 @@ class _CameraScreenState extends State<CameraScreen> {
                 await _initializeControllerFuture; // Ensure the future is complete before proceeding
                 if (pictureCount < 4) {
                   final XFile image = await _controller!.takePicture();
-                  String overlayImagePath = await mergeImageWithOverlay(
-                      image, widget.overlayImageUrl);
+                  String overlayImagePath = await mergeImage(
+                      image, widget.overlayImageUrls[overlayIndex]);
                   takePictures.add(overlayImagePath);
+                  changeOverlayImage();
                   pictureCount++;
 
                   if (pictureCount == 4) {
@@ -132,7 +140,7 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 
-  Future<String> mergeImageWithOverlay(XFile picture, String overlayUrl) async {
+  Future<String> mergeImage(XFile picture, String overlayUrl) async {
     File file = File(picture.path);
 
     if (!file.existsSync()) {
@@ -142,11 +150,18 @@ class _CameraScreenState extends State<CameraScreen> {
 
     img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
     img.Image flippedImage = img.flipHorizontal(baseImage);
-    final response = await http.get(Uri.parse(overlayUrl));
 
     int baseWidth = baseImage.width;
     int baseHeight = baseImage.height;
-    img.Image overlayImage = img.decodeImage(response.bodyBytes)!;
+
+    // Load overlay image from URL
+    final response = await http.get(Uri.parse(overlayUrl));
+    if (response.statusCode != 200) {
+      print('Failed to load overlay image');
+      return '';
+    }
+    Uint8List bytes = response.bodyBytes;
+    img.Image overlayImage = img.decodeImage(bytes)!;
 
     img.Image resizedFlippedImage = img.copyResize(
       flippedImage,
