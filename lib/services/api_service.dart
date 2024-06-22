@@ -17,7 +17,8 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> postData(String endpoint, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> postData(
+      String endpoint, Map<String, dynamic> data) async {
     final response = await http.post(
       Uri.parse('$baseUrl/$endpoint'),
       headers: {'Content-Type': 'application/json'},
@@ -59,12 +60,12 @@ class ApiService {
     String jobName,
     String printMode,
   ) async {
-    final uri = Uri.parse('$baseUrl/epson/print-setting')
-        .replace(queryParameters: {
+    final uri =
+        Uri.parse('$baseUrl/epson/print-setting').replace(queryParameters: {
       'access-token': accessToken,
       'subject-id': subjectId,
     });
-    
+
     final response = await http.post(
       uri,
       headers: {'Content-Type': 'application/json'},
@@ -86,8 +87,8 @@ class ApiService {
   }
 
   Future<String> uploadPrintFile(String uploadUri, String filePath) async {
-    final uri = Uri.parse('$baseUrl/epson/upload-print-file')
-    .replace(queryParameters: {
+    final uri =
+        Uri.parse('$baseUrl/epson/upload-print-file').replace(queryParameters: {
       'upload-uri': uploadUri,
     });
     final request = http.MultipartRequest('POST', uri);
@@ -115,7 +116,8 @@ class ApiService {
     String subjectId,
     String jobId,
   ) async {
-    final uri = Uri.parse('$baseUrl/epson/execute-print').replace(queryParameters: {
+    final uri =
+        Uri.parse('$baseUrl/epson/execute-print').replace(queryParameters: {
       'access-token': accessToken,
       'subject-id': subjectId,
       'job-id': jobId,

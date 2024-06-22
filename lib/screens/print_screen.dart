@@ -68,7 +68,9 @@ class PrintScreen extends StatelessWidget {
                   foregroundColor: Colors.black, // Set the background color
                   backgroundColor: Colors.white, // Set the text color
                 ),
-                child: Text('Print Picture!', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text('Print Picture!',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
           ],

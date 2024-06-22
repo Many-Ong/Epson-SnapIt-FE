@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'camera_screen.dart';
 import 'package:camera/camera.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class FrameSelectionScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -30,6 +32,27 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
   ];
 
   Color selectedFrameColor = Colors.blue; // Default color
+  TextEditingController _textController = TextEditingController();
+  String? overlayImageUrl;
+
+  Future<void> generateOverlayImage(String text) async {
+    // Replace with your AI service URL and request format
+    final response = await http.post(
+      Uri.parse('https://api.your-ai-service.com/generate-overlay'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'text': text}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        overlayImageUrl = data['imageUrl'];
+      });
+    } else {
+      // Handle error
+      print('Error generating overlay image: ${response.body}');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,83 +62,115 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
         centerTitle: true,
       ),
       body: SafeArea(
-          child: 
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                Text(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
                 'Choose your favorite Frame',
                 style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-                SizedBox(height: 10),
-                Center(
+              ),
+              SizedBox(height: 10),
+              Center(
                 child: CustomPaint(
-                size: Size(120, 320),
-                painter: FramePainter(selectedFrameColor),
+                  size: Size(120, 320),
+                  painter: FramePainter(selectedFrameColor),
                 ),
               ),
               SizedBox(height: 20),
               Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Wrap(
-              spacing: 8.0,
-              runSpacing: 16.0,
-              children: frameColors.map((color) {
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      selectedFrameColor = color;
-                    });
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: TextField(
+                  controller: _textController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter text for overlay',
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    generateOverlayImage(_textController.text);
                   },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: selectedFrameColor == color ? Colors.black : Colors.transparent,
-                        width: 4,
+                  child: Text('Generate Overlay Image'),
+                ),
+              ),
+              if (overlayImageUrl != null) ...[
+                SizedBox(height: 20),
+                Image.network(overlayImageUrl!),
+              ],
+              SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Wrap(
+                  spacing: 8.0,
+                  runSpacing: 16.0,
+                  children: frameColors.map((color) {
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedFrameColor = color;
+                        });
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: selectedFrameColor == color
+                                ? Colors.black
+                                : Colors.transparent,
+                            width: 4,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CameraScreen(
-                      camera: widget.camera,
-                      frameColor: selectedFrameColor,
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
+                    );
+                  }).toList(),
                 ),
               ),
-              child: const Text(
-                'Ready To SHOOT!',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (overlayImageUrl != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CameraScreen(
+                            camera: widget.camera,
+                            frameColor: selectedFrameColor,
+                            overlayImageUrl: overlayImageUrl!,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 100, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                  ),
+                  child: const Text(
+                    'Ready To SHOOT!',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
       ),
     );
   }

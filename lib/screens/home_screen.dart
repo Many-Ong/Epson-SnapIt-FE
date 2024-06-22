@@ -18,7 +18,8 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const Spacer(),
-            Image.asset('assets/logo.png', width: 300), // Display the logo image
+            Image.asset('assets/logo.png',
+                width: 300), // Display the logo image
             const Spacer(),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 60),
@@ -26,13 +27,16 @@ class HomeScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => FrameSelectionScreen(camera: camera)),
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            FrameSelectionScreen(camera: camera)),
                   );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 100, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(50),
                   ),

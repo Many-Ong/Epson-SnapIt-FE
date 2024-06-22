@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:flutter/material.dart' hide Image; // Avoiding conflict with image package
+import 'package:flutter/material.dart'
+    hide Image; // Avoiding conflict with image package
 import 'package:flutter/material.dart' as flutter;
 import 'package:camera/camera.dart';
 import 'package:flutter/services.dart';
@@ -7,12 +8,19 @@ import 'package:image/image.dart' as img;
 import 'package:snapit/screens/display_picture_screen.dart';
 import 'package:snapit/assets.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'display_picture_screen.dart';
 
 class CameraScreen extends StatefulWidget {
   final CameraDescription camera;
   final Color frameColor;
+  final String overlayImageUrl;
 
-  const CameraScreen({super.key, required this.camera, required this.frameColor});
+  const CameraScreen(
+      {super.key,
+      required this.camera,
+      required this.frameColor,
+      required this.overlayImageUrl});
 
   @override
   _CameraScreenState createState() => _CameraScreenState();
@@ -24,7 +32,6 @@ class _CameraScreenState extends State<CameraScreen> {
   List<CameraDescription> cameras = [];
   int pictureCount = 0;
   List<String> takePictures = [];
-  int overlayIndex = 0; // New variable to keep track of the overlay image index
 
   @override
   void initState() {
@@ -54,13 +61,6 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
-    // Method to change the overlay image
-  void changeOverlayImage() {
-    setState(() {
-      overlayIndex = (overlayIndex + 1) % Assets.overlayImages.length;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -80,9 +80,9 @@ class _CameraScreenState extends State<CameraScreen> {
                 Center(
                   child: AspectRatio(
                     aspectRatio: 4 / 3,
-                    child: flutter.Image.asset(
-                      Assets.overlayImages[overlayIndex],
-                      fit: BoxFit.contain,
+                    child: flutter.Image.network(
+                      widget.overlayImageUrl,
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
@@ -103,16 +103,18 @@ class _CameraScreenState extends State<CameraScreen> {
                 await _initializeControllerFuture; // Ensure the future is complete before proceeding
                 if (pictureCount < 4) {
                   final XFile image = await _controller!.takePicture();
-                  String overlayImagePath = await mergeImage(image, Assets.overlayImages[overlayIndex]);
+                  String overlayImagePath = await mergeImageWithOverlay(
+                      image, widget.overlayImageUrl);
                   takePictures.add(overlayImagePath);
-                  changeOverlayImage();
                   pictureCount++;
 
                   if (pictureCount == 4) {
-                    String mergedImagePath = await mergeFourImages(takePictures, widget.frameColor);
+                    String mergedImagePath =
+                        await mergeFourImages(takePictures, widget.frameColor);
                     await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => DisplayPictureScreen(imagePath: mergedImagePath, context: context),
+                        builder: (context) => DisplayPictureScreen(
+                            imagePath: mergedImagePath, context: context),
                       ),
                     );
                     pictureCount = 0;
@@ -130,7 +132,7 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 
-  Future<String> mergeImage(XFile picture, String overlayAsset) async {
+  Future<String> mergeImageWithOverlay(XFile picture, String overlayUrl) async {
     File file = File(picture.path);
 
     if (!file.existsSync()) {
@@ -140,13 +142,11 @@ class _CameraScreenState extends State<CameraScreen> {
 
     img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
     img.Image flippedImage = img.flipHorizontal(baseImage);
+    final response = await http.get(Uri.parse(overlayUrl));
 
     int baseWidth = baseImage.width;
     int baseHeight = baseImage.height;
-
-    ByteData data = await rootBundle.load(overlayAsset);
-    Uint8List bytes = data.buffer.asUint8List();
-    img.Image overlayImage = img.decodeImage(bytes)!;
+    img.Image overlayImage = img.decodeImage(response.bodyBytes)!;
 
     img.Image resizedFlippedImage = img.copyResize(
       flippedImage,
@@ -157,20 +157,26 @@ class _CameraScreenState extends State<CameraScreen> {
     img.Image resizedOverlayImage = img.copyResize(
       overlayImage,
       width: resizedFlippedImage.width,
-      height: (resizedFlippedImage.width * overlayImage.height / overlayImage.width).round(),
+      height:
+          (resizedFlippedImage.width * overlayImage.height / overlayImage.width)
+              .round(),
     );
 
     int offsetX = (resizedFlippedImage.width - resizedOverlayImage.width) ~/ 2;
-    int offsetY = (resizedFlippedImage.height - resizedOverlayImage.height) ~/ 2;
-    img.copyInto(resizedFlippedImage, resizedOverlayImage, dstX: offsetX, dstY: offsetY);
+    int offsetY =
+        (resizedFlippedImage.height - resizedOverlayImage.height) ~/ 2;
+    img.copyInto(resizedFlippedImage, resizedOverlayImage,
+        dstX: offsetX, dstY: offsetY);
 
     String newPath = '${file.parent.path}/merged_${DateTime.now()}.png';
-    File newImageFile = File(newPath)..writeAsBytesSync(img.encodePng(resizedFlippedImage));
+    File newImageFile = File(newPath)
+      ..writeAsBytesSync(img.encodePng(resizedFlippedImage));
     print('New image saved at: $newPath');
     return newImageFile.path;
   }
 
-  Future<String> mergeFourImages(List<String> imagePaths, Color backgroundColor) async {
+  Future<String> mergeFourImages(
+      List<String> imagePaths, Color backgroundColor) async {
     List<img.Image> images = [];
 
     for (String path in imagePaths) {
@@ -184,7 +190,10 @@ class _CameraScreenState extends State<CameraScreen> {
     img.Image mergedFourImage = img.Image(width + 160, height + 300);
 
     // Set background color
-    img.fill(mergedFourImage, img.getColor(backgroundColor.red, backgroundColor.green, backgroundColor.blue));
+    img.fill(
+        mergedFourImage,
+        img.getColor(
+            backgroundColor.red, backgroundColor.green, backgroundColor.blue));
 
     int offsetY = 60;
     for (img.Image image in images) {
