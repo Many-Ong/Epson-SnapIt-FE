@@ -38,8 +38,13 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
 
   final DeepAiApiService deepAiApiService = DeepAiApiService();
   List<String> generatedImageUrls = []; // Store generated image URLs
+  bool isLoading = false; // Flag to track if images are being generated
 
   Future<void> generateOverlayImages(String text) async {
+    setState(() {
+      isLoading = true; // Start loading
+    });
+
     const List<String> locations = [
       'right side of the image',
       'left side of the image'
@@ -78,6 +83,10 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
         print('Failed to generate overlay image: $e');
       }
     }
+
+    setState(() {
+      isLoading = false; // Stop loading
+    });
   }
 
   @override
@@ -123,10 +132,10 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
                   child: Text('Generate Overlay Images'),
                 ),
               ),
-              // if (generatedImageUrls != null) ...[
-              //   SizedBox(height: 20),
-              //   Image.memory(overlayImageBytes!),
-              // ],
+              if (isLoading) ...[
+                SizedBox(height: 20),
+                CircularProgressIndicator(),
+              ],
               SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -162,18 +171,20 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CameraScreen(
-                          camera: widget.camera,
-                          frameColor: selectedFrameColor,
-                          overlayImages: generatedImageUrls,
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: isLoading || generatedImageUrls.isEmpty
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CameraScreen(
+                                camera: widget.camera,
+                                frameColor: selectedFrameColor,
+                                overlayImages: generatedImageUrls,
+                              ),
+                            ),
+                          );
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: Colors.black,
