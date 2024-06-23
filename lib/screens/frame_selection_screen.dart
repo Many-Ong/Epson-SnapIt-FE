@@ -58,18 +58,22 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
     for (int i = 0; i < 4; i++) {
       final randomLocation = locations[random.nextInt(locations.length)];
       final randomAction = actions[random.nextInt(actions.length)];
-      print('Generating overlay image with text: $text $randomAction $randomLocation');
+      print(
+          'Generating overlay image with text: $text $randomAction $randomLocation');
 
       try {
         final response = await deepAiApiService.text2img(
-          text: '$text placed on the $randomLocation',
-        );
-
+            text: '$text $randomAction placed on the $randomLocation');
         final responseData = json.decode(response);
         final imageUrl = responseData['output_url'];
-        generatedImageUrls.add(imageUrl);
 
-        print('Image generated successfully: $imageUrl');
+        // Remove background from generated image
+        final imageWithRemovedBgUrl =
+            await deepAiApiService.removeBackground(imageUrl);
+        generatedImageUrls.add(imageWithRemovedBgUrl);
+
+        print(
+            'Image generated and background removed successfully: $imageWithRemovedBgUrl');
       } catch (e) {
         print('Failed to generate overlay image: $e');
       }
@@ -119,7 +123,7 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
                   child: Text('Generate Overlay Images'),
                 ),
               ),
-              // if (overlayImageBytes != null) ...[
+              // if (generatedImageUrls != null) ...[
               //   SizedBox(height: 20),
               //   Image.memory(overlayImageBytes!),
               // ],
