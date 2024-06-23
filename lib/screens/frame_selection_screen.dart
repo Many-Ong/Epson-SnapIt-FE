@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'camera_screen.dart';
 import 'package:camera/camera.dart';
 import 'package:snapit/services/deepai_api_service.dart';
+import 'dart:convert';
 
 class FrameSelectionScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -36,30 +37,42 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
   TextEditingController _textController = TextEditingController();
 
   final DeepAiApiService deepAiApiService = DeepAiApiService();
+  List<String> generatedImageUrls = []; // Store generated image URLs
 
-  Future<void> generateOverlayImage(String text) async {
+  Future<void> generateOverlayImages(String text) async {
     const List<String> locations = [
       'right side of the image',
       'left side of the image'
     ];
+    const List<String> actions = [
+      'jumping',
+      'running',
+      'sitting',
+      'standing',
+      'walking',
+      'sleeping'
+    ];
+
     final random = Random();
-    final randomLocation = locations[random.nextInt(locations.length)];
 
-    print('Generating overlay image with text: $text $randomLocation');
+    for (int i = 0; i < 4; i++) {
+      final randomLocation = locations[random.nextInt(locations.length)];
+      final randomAction = actions[random.nextInt(actions.length)];
+      print('Generating overlay image with text: $text $randomAction $randomLocation');
 
-    try {
-      final response = await deepAiApiService.text2img(
-        text: '$text placed on the $randomLocation',
-      );
+      try {
+        final response = await deepAiApiService.text2img(
+          text: '$text placed on the $randomLocation',
+        );
 
-      print('Response: $response');
+        final responseData = json.decode(response);
+        final imageUrl = responseData['output_url'];
+        generatedImageUrls.add(imageUrl);
 
-      print('Image generated successfully');
-      // setState(() {
-      //   overlayImageBytes = imageBytes;
-      // });
-    } catch (e) {
-      print('Failed to generate overlay image: $e');
+        print('Image generated successfully: $imageUrl');
+      } catch (e) {
+        print('Failed to generate overlay image: $e');
+      }
     }
   }
 
@@ -100,10 +113,10 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: ElevatedButton(
-                  onPressed: () {
-                    generateOverlayImage(_textController.text);
+                  onPressed: () async {
+                    await generateOverlayImages(_textController.text);
                   },
-                  child: Text('Generate Overlay Image'),
+                  child: Text('Generate Overlay Images'),
                 ),
               ),
               // if (overlayImageBytes != null) ...[
@@ -152,6 +165,7 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
                         builder: (context) => CameraScreen(
                           camera: widget.camera,
                           frameColor: selectedFrameColor,
+                          overlayImages: generatedImageUrls,
                         ),
                       ),
                     );
