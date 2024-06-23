@@ -13,21 +13,30 @@ Future<void> main() async {
   }
 
   final cameras = await availableCameras();
-  final firstCamera = cameras.first;
+  bool camerasAvailable = cameras.isNotEmpty;
 
-  runApp(MyApp(camera: firstCamera));
+  print('Cameras available: $camerasAvailable');
+
+  final firstCamera = camerasAvailable ? cameras.first : null;
+
+  runApp(MyApp(camera: firstCamera, camerasAvailable: camerasAvailable));
 }
 
 class MyApp extends StatelessWidget {
-  final CameraDescription camera;
+  final CameraDescription? camera;
+  final bool camerasAvailable;
 
-  const MyApp({super.key, required this.camera});
+  const MyApp(
+      {super.key, required this.camera, required this.camerasAvailable});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: ThemeData.dark(),
-      home: HomeScreen(camera: camera), // Set HomeScreen as the home screen
+      home: HomeScreen(
+        camera: camera,
+        camerasAvailable: camerasAvailable,
+      ), // Set HomeScreen as the home screen
     );
   }
 }
