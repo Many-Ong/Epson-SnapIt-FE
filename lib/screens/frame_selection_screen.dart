@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'camera_screen.dart';
 import 'package:camera/camera.dart';
 import 'package:snapit/services/deepai_api_service.dart';
+import 'image_upload_screen.dart';
 import 'dart:convert';
 
 class FrameSelectionScreen extends StatefulWidget {
@@ -94,7 +95,6 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Frame Selection'),
-        centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -123,18 +123,30 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
                 ),
               ),
               SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: ElevatedButton(
+              if (isLoading) ...[
+                CircularProgressIndicator(),
+              ] else ...[
+                ElevatedButton(
                   onPressed: () async {
                     await generateOverlayImages(_textController.text);
                   },
                   child: Text('Generate Overlay Images'),
                 ),
-              ),
-              if (isLoading) ...[
                 SizedBox(height: 20),
-                CircularProgressIndicator(),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ImageUploadScreen(
+                          camera: widget.camera,
+                          frameColor: selectedFrameColor,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text('Upload Your Own Images'),
+                ),
               ],
               SizedBox(height: 20),
               Padding(

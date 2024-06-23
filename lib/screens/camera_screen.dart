@@ -6,7 +6,6 @@ import 'package:camera/camera.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:snapit/screens/display_picture_screen.dart';
-import 'package:snapit/assets.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 
@@ -15,18 +14,19 @@ class CameraScreen extends StatefulWidget {
   final Color frameColor;
   final List<String> overlayImages;
 
-  const CameraScreen(
-      {super.key,
-      required this.camera,
-      required this.frameColor,
-      required this.overlayImages});
+  const CameraScreen({
+    super.key,
+    required this.camera,
+    required this.frameColor,
+    required this.overlayImages,
+  });
 
   @override
   _CameraScreenState createState() => _CameraScreenState();
 }
 
 class _CameraScreenState extends State<CameraScreen> {
-  CameraController? _controller;
+  late CameraController _controller;
   late Future<void> _initializeControllerFuture;
   List<CameraDescription> cameras = [];
   int pictureCount = 0;
@@ -46,9 +46,9 @@ class _CameraScreenState extends State<CameraScreen> {
       orElse: () => cameras.first,
     );
     _controller = CameraController(frontCamera, ResolutionPreset.medium);
-    _initializeControllerFuture = _controller!.initialize().then((_) async {
+    _initializeControllerFuture = _controller.initialize().then((_) async {
       if (!mounted) return;
-      await _controller!.setFlashMode(FlashMode.off);
+      await _controller.setFlashMode(FlashMode.off);
       setState(() {});
     }).catchError((error) {
       print('Error initializing camera: $error');
@@ -57,7 +57,7 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   void dispose() {
-    _controller?.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -81,16 +81,21 @@ class _CameraScreenState extends State<CameraScreen> {
                 Center(
                   child: AspectRatio(
                     aspectRatio: 4 / 3,
-                    child: CameraPreview(_controller!),
+                    child: CameraPreview(_controller),
                   ),
                 ),
                 Center(
                   child: AspectRatio(
                     aspectRatio: 4 / 3,
-                    child: flutter.Image.network(
-                      widget.overlayImages[overlayIndex],
-                      fit: BoxFit.contain,
-                    ),
+                    child: widget.overlayImages[overlayIndex].startsWith('http')
+                        ? flutter.Image.network(
+                            widget.overlayImages[overlayIndex],
+                            fit: BoxFit.contain,
+                          )
+                        : flutter.Image.file(
+                            File(widget.overlayImages[overlayIndex]),
+                            fit: BoxFit.contain,
+                          ),
                   ),
                 ),
               ],
@@ -109,7 +114,7 @@ class _CameraScreenState extends State<CameraScreen> {
               try {
                 await _initializeControllerFuture; // Ensure the future is complete before proceeding
                 if (pictureCount < 4) {
-                  final XFile image = await _controller!.takePicture();
+                  final XFile image = await _controller.takePicture();
                   String overlayImagePath = await mergeImage(
                       image, widget.overlayImages[overlayIndex]);
                   takePictures.add(overlayImagePath);
@@ -140,7 +145,7 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 
-  Future<String> mergeImage(XFile picture, String overlayUrl) async {
+  Future<String> mergeImage(XFile picture, String overlayPath) async {
     File file = File(picture.path);
 
     if (!file.existsSync()) {
@@ -154,9 +159,14 @@ class _CameraScreenState extends State<CameraScreen> {
     int baseWidth = baseImage.width;
     int baseHeight = baseImage.height;
 
-    final response = await http.get(Uri.parse(overlayUrl));
-    Uint8List bytes = response.bodyBytes;
-    img.Image overlayImage = img.decodeImage(bytes)!;
+    img.Image overlayImage;
+    if (overlayPath.startsWith('http')) {
+      final response = await http.get(Uri.parse(overlayPath));
+      Uint8List bytes = response.bodyBytes;
+      overlayImage = img.decodeImage(bytes)!;
+    } else {
+      overlayImage = img.decodeImage(File(overlayPath).readAsBytesSync())!;
+    }
 
     img.Image resizedFlippedImage = img.copyResize(
       flippedImage,
