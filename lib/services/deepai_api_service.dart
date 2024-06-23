@@ -34,9 +34,35 @@ class DeepAiApiService {
     }
   }
 
+  Future<String> aiSelfieGenerator({
+    required File imageFile,
+    required String text,
+  }) async {
+    final request = http.MultipartRequest(
+        'POST', Uri.parse('$baseUrl/ai-selfie-generator'))
+      ..headers['api-key'] = apiKey
+      ..fields['text'] = text
+      ..files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+
+    final response = await request.send();
+    final responseData = await http.Response.fromStream(response);
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return responseData.body;
+    } else {
+      throw Exception('Failed to generate AI selfie: ${responseData.body}');
+    }
+  }
+
   Future<String> removeBackground(String imageUrl) async {
-    final Map<String, dynamic> requestBody = {'image': imageUrl};
-    final headers = {'Content-Type': 'application/json', 'api-key': apiKey};
+    final Map<String, dynamic> requestBody = {
+      'image': imageUrl,
+    };
+
+    final headers = {
+      'Content-Type': 'application/json',
+      'api-key': apiKey,
+    };
 
     final response = await http.post(
       Uri.parse('$baseUrl/background-remover'),
@@ -45,9 +71,8 @@ class DeepAiApiService {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      final responseData = json.decode(response.body);
-      print('Response data: $responseData');
-      return responseData['output_url'];
+      print('Background removed successfully: ${response.body}');
+      return response.body;
     } else {
       throw Exception('Failed to remove background: ${response.body}');
     }
