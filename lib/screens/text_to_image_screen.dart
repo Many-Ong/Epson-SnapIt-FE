@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:snapit/services/deepai_api_service.dart';
 import 'frame_selection_screen.dart';
+//테스트용 파일 추가
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class TextToImageScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -19,6 +23,15 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
   final DeepAiApiService deepAiApiService = DeepAiApiService();
   List<String> generatedImageUrls = [];
   bool isLoading = false;
+
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      testAssetImage();  // 이미지 처리를 테스트 함수에서 시작
+    });
+  }
 
   Future<void> generateOverlayImages(String text) async {
     setState(() {
@@ -73,7 +86,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
 
     if (generatedImageUrls.length == 4) {
       Navigator.push(
-        context,
+        this.context,
         MaterialPageRoute(
           builder: (context) => FrameSelectionScreen(
             camera: widget.camera,
@@ -83,6 +96,42 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
       );
     }
   }
+
+  Future<File> copyAssetToFile(String assetPath) async {
+    final byteData = await rootBundle.load(assetPath);
+    final directory = await getApplicationDocumentsDirectory();
+    final filePath = '${directory.path}/${assetPath.split('/').last}';
+    final file = File(filePath);
+    await file.writeAsBytes(
+      byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes)
+    );
+    return file;
+  }
+
+  Future<void> testAssetImage() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    for (int i = 1; i <= 4; i++) {
+      File localImageFile = await copyAssetToFile('assets/Image1_$i.png');
+      generatedImageUrls.add(localImageFile.path);  // 파일 경로를 리스트에 추가
+    }
+
+    setState(() {
+      isLoading = false;
+    });
+
+    Navigator.push(
+      this.context,
+      MaterialPageRoute(
+        builder: (context) => FrameSelectionScreen(
+          camera: widget.camera,
+          overlayImages: generatedImageUrls,
+        ),
+      ),
+    );
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +158,8 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
             else
               ElevatedButton(
                 onPressed: () async {
-                  await generateOverlayImages(_textController.text);
+                  //await generateOverlayImages(_textController.text);
+                  await testAssetImage();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,

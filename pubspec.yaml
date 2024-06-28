@@ -70,6 +70,7 @@ flutter:
   assets:
     - assets/
     - .env
+
   fonts:
     - family: AvenirNext
       fonts:
