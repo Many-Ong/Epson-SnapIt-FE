@@ -108,30 +108,33 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
     return file;
   }
 
-  Future<void> testAssetImage() async {
+  Future<bool> testAssetImage() async {
     setState(() {
       isLoading = true;
     });
 
+    List<String> tempGeneratedImageUrls = [];
+
     for (int i = 1; i <= 4; i++) {
       File localImageFile = await copyAssetToFile('assets/Image1_$i.png');
-      generatedImageUrls.add(localImageFile.path);  // 파일 경로를 리스트에 추가
+      if (localImageFile != null) {
+        tempGeneratedImageUrls.add(localImageFile.path); // 파일 경로를 임시 리스트에 추가
+      }
     }
 
     setState(() {
+      generatedImageUrls = tempGeneratedImageUrls;
       isLoading = false;
     });
 
-    Navigator.push(
-      this.context,
-      MaterialPageRoute(
-        builder: (context) => FrameSelectionScreen(
-          camera: widget.camera,
-          overlayImages: generatedImageUrls,
-        ),
-      ),
-    );
+    if (generatedImageUrls.length == 4) {
+      print("Success!");
+      return true;
+    } else {
+      print("Failed!");
+      return false;
     }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +143,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
         title: const Text('Generate Images with Text'),
       ),
       body: SafeArea(
-        child: Column(
+        child: Column( 
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Padding(
@@ -156,16 +159,39 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
             if (isLoading)
               CircularProgressIndicator()
             else
-              ElevatedButton(
-                onPressed: () async {
-                  //await generateOverlayImages(_textController.text);
-                  await testAssetImage();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                ),
-                child: Text('Generate Overlay Images'),
+              Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      await generateOverlayImages(_textController.text);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: Text('Generate Overlay Images'),
+                  ),
+                  SizedBox(height: 10), // 버튼 사이의 간격을 위한 SizedBox
+                  ElevatedButton(
+                    onPressed: () async {
+                      bool success = await testAssetImage();
+                      if (success) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => FrameSelectionScreen(
+                              camera: widget.camera,
+                              overlayImages: generatedImageUrls,
+                          )),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: Text('Test Overlay Image'),
+                  ),
+                ],
               ),
           ],
         ),
