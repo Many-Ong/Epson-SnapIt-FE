@@ -31,6 +31,10 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone is required for recording videos</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
+  <string>Need permission to save photos to your library</string>
+  <key>NSPhotoLibraryUsageDescription</key>
+  <string>Need permission to access your photo library</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Need permission to save photos to your library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Need permission to access your photo library</string>
