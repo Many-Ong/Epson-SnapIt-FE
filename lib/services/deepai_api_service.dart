@@ -59,6 +59,9 @@ class DeepAiApiService {
       'image': imageUrl,
     };
 
+    print('Removing background from image: $imageUrl');
+    print('Request body: $requestBody');
+
     final headers = {
       'Content-Type': 'application/json',
       'api-key': apiKey,

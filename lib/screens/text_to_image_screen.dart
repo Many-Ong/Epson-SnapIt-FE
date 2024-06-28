@@ -24,19 +24,12 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
   List<String> generatedImageUrls = [];
   bool isLoading = false;
 
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      testAssetImage();  // 이미지 처리를 테스트 함수에서 시작
-    });
-  }
-
   Future<void> generateOverlayImages(String text) async {
     setState(() {
       isLoading = true;
     });
+
+    List<String> localGeneratedImageUrls = [];
 
     const List<String> locations = [
       'right side of the image',
@@ -71,7 +64,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
         final removeBgData = json.decode(removeBgResponse);
         final removeBgImageUrl = removeBgData['output_url'];
 
-        generatedImageUrls.add(removeBgImageUrl);
+        localGeneratedImageUrls.add(removeBgImageUrl);
 
         print(
             'Image generated and background removed successfully: $removeBgImageUrl');
@@ -81,20 +74,29 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
     }
 
     setState(() {
+      generatedImageUrls = localGeneratedImageUrls;
       isLoading = false;
     });
 
-    if (generatedImageUrls.length == 4) {
-      Navigator.push(
-        this.context,
-        MaterialPageRoute(
-          builder: (context) => FrameSelectionScreen(
-            camera: widget.camera,
-            overlayImages: generatedImageUrls,
-          ),
-        ),
-      );
+    print('Generated image URLs: $generatedImageUrls');
+
+
+    if (generatedImageUrls.length != 4) { // Add random images to fill the list
+      while(generatedImageUrls.length < 4) {
+        String tmpImageUrls = generatedImageUrls[random.nextInt(generatedImageUrls.length)];
+        generatedImageUrls.add(tmpImageUrls);
+      }
     }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FrameSelectionScreen(
+          camera: widget.camera,
+          overlayImages: generatedImageUrls,
+        ),
+      ),
+    );
   }
 
   Future<File> copyAssetToFile(String assetPath) async {
@@ -159,7 +161,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
             if (isLoading)
               CircularProgressIndicator()
             else
-              Row(
+              Column(
                 children: [
                   ElevatedButton(
                     onPressed: () async {
@@ -189,7 +191,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.black,
                     ),
-                    child: Text('Test Overlay Image'),
+                    child: Text('Test with Default Images'),
                   ),
                 ],
               ),
