@@ -217,7 +217,7 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<String> mergeFourImages(
-      List<String> imagePaths, Color backgroundColor) async {
+    List<String> imagePaths, Color backgroundColor) async {
     List<img.Image> images = [];
 
     for (String path in imagePaths) {
@@ -225,10 +225,14 @@ class _CameraScreenState extends State<CameraScreen> {
       images.add(image);
     }
 
-    int width = images[0].width;
-    int height = images.fold(0, (prev, element) => prev + element.height);
+    ByteData logoData = await rootBundle.load('assets/logo.png');
+    img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
 
-    img.Image mergedFourImage = img.Image(width + 80, height + 300);
+
+    int width = images[0].width;
+    int height = images.fold(0, (prev, element) => prev + element.height) + logoImage.height;
+
+    img.Image mergedFourImage = img.Image(width + 80, height + 270);
 
     // Set background color
     img.fill(
@@ -241,6 +245,9 @@ class _CameraScreenState extends State<CameraScreen> {
       img.copyInto(mergedFourImage, image, dstX: 40, dstY: offsetY);
       offsetY += (image.height + 40);
     }
+    // SnapIT 이미지를 하단에 복사
+    img.copyInto(mergedFourImage, logoImage,
+    dstX: (mergedFourImage.width - logoImage.width) ~/ 2, dstY: offsetY + 20);
 
     Directory dic = await getApplicationDocumentsDirectory();
     String filename = '${dic.path}/merged_${DateTime.now()}.png';
