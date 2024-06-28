@@ -5,6 +5,7 @@ import 'package:camera/camera.dart';
 import 'package:snapit/services/deepai_api_service.dart';
 import 'dart:convert';
 import 'frame_selection_screen.dart';
+import 'dart:math';
 
 class ChangeStyleOfUploadedImageScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -39,6 +40,8 @@ class _ChangeStyleOfUploadedImageScreenState
       isLoading = true;
     });
 
+    final random = Random();
+
     for (var imageFile in uploadedImages) {
       try {
         final aiSelfieResponse = await deepAiApiService.aiSelfieGenerator(
@@ -63,17 +66,25 @@ class _ChangeStyleOfUploadedImageScreenState
       isLoading = false;
     });
 
-    if (processedImageUrls.length == 4) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FrameSelectionScreen(
-            camera: widget.camera,
-            overlayImages: processedImageUrls,
-          ),
-        ),
-      );
+    print('Generated image URLs: $processedImageUrls');
+
+
+    if (processedImageUrls.length != 4) { // Add random images to fill the list
+      while(processedImageUrls.length < 4) {
+        String tmpImageUrls = processedImageUrls[random.nextInt(processedImageUrls.length)];
+        processedImageUrls.add(tmpImageUrls);
+      }
     }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FrameSelectionScreen(
+          camera: widget.camera,
+          overlayImages: processedImageUrls,
+        ),
+      ),
+    );
   }
 
   @override

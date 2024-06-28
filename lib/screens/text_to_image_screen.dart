@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:snapit/services/deepai_api_service.dart';
 import 'frame_selection_screen.dart';
+//테스트용 파일 추가
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class TextToImageScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -24,6 +28,8 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
     setState(() {
       isLoading = true;
     });
+
+    List<String> localGeneratedImageUrls = [];
 
     const List<String> locations = [
       'right side of the image',
@@ -58,7 +64,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
         final removeBgData = json.decode(removeBgResponse);
         final removeBgImageUrl = removeBgData['output_url'];
 
-        generatedImageUrls.add(removeBgImageUrl);
+        localGeneratedImageUrls.add(removeBgImageUrl);
 
         print(
             'Image generated and background removed successfully: $removeBgImageUrl');
@@ -68,19 +74,67 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
     }
 
     setState(() {
+      generatedImageUrls = localGeneratedImageUrls;
+      isLoading = false;
+    });
+
+    print('Generated image URLs: $generatedImageUrls');
+
+
+    if (generatedImageUrls.length != 4) { // Add random images to fill the list
+      while(generatedImageUrls.length < 4) {
+        String tmpImageUrls = generatedImageUrls[random.nextInt(generatedImageUrls.length)];
+        generatedImageUrls.add(tmpImageUrls);
+      }
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FrameSelectionScreen(
+          camera: widget.camera,
+          overlayImages: generatedImageUrls,
+        ),
+      ),
+    );
+  }
+
+  Future<File> copyAssetToFile(String assetPath) async {
+    final byteData = await rootBundle.load(assetPath);
+    final directory = await getApplicationDocumentsDirectory();
+    final filePath = '${directory.path}/${assetPath.split('/').last}';
+    final file = File(filePath);
+    await file.writeAsBytes(
+      byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes)
+    );
+    return file;
+  }
+
+  Future<bool> testAssetImage() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    List<String> tempGeneratedImageUrls = [];
+
+    for (int i = 1; i <= 4; i++) {
+      File localImageFile = await copyAssetToFile('assets/Image1_$i.png');
+      if (localImageFile != null) {
+        tempGeneratedImageUrls.add(localImageFile.path); // 파일 경로를 임시 리스트에 추가
+      }
+    }
+
+    setState(() {
+      generatedImageUrls = tempGeneratedImageUrls;
       isLoading = false;
     });
 
     if (generatedImageUrls.length == 4) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => FrameSelectionScreen(
-            camera: widget.camera,
-            overlayImages: generatedImageUrls,
-          ),
-        ),
-      );
+      print("Success!");
+      return true;
+    } else {
+      print("Failed!");
+      return false;
     }
   }
 
@@ -91,7 +145,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
         title: const Text('Generate Images with Text'),
       ),
       body: SafeArea(
-        child: Column(
+        child: Column( 
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Padding(
@@ -107,15 +161,39 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
             if (isLoading)
               CircularProgressIndicator()
             else
-              ElevatedButton(
-                onPressed: () async {
-                  await generateOverlayImages(_textController.text);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.black,
-                ),
-                child: Text('Generate Overlay Images'),
+              Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      await generateOverlayImages(_textController.text);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: Text('Generate Overlay Images'),
+                  ),
+                  SizedBox(height: 10), // 버튼 사이의 간격을 위한 SizedBox
+                  ElevatedButton(
+                    onPressed: () async {
+                      bool success = await testAssetImage();
+                      if (success) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => FrameSelectionScreen(
+                              camera: widget.camera,
+                              overlayImages: generatedImageUrls,
+                          )),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                    ),
+                    child: Text('Test with Default Images'),
+                  ),
+                ],
               ),
           ],
         ),
