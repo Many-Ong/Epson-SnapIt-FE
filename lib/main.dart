@@ -32,11 +32,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData.dark().copyWith( //기존 속성 유지하며 폰트만 추가
-        textTheme: ThemeData.dark().textTheme.apply(
-              fontFamily: 'AvenirNext',
-            ),
-      ),
+      theme: ThemeData.dark(),
       home: HomeScreen(
         camera: camera,
         camerasAvailable: camerasAvailable,
