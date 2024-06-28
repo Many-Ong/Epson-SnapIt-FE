@@ -225,9 +225,19 @@ class _CameraScreenState extends State<CameraScreen> {
       images.add(image);
     }
 
+    //logo 이미지 코드
     ByteData logoData = await rootBundle.load('assets/logo.png');
     img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
-
+    // 배경이 흰색인 경우 검정색으로 변환
+    if (backgroundColor == Colors.white) {
+      for (int y = 0; y < logoImage.height; y++) {
+        for (int x = 0; x < logoImage.width; x++) {
+          if (logoImage.getPixel(x, y) == img.getColor(255, 255, 255)) {
+            logoImage.setPixel(x, y, img.getColor(0, 0, 0));
+          }
+        }
+      }
+    }
 
     int width = images[0].width;
     int height = images.fold(0, (prev, element) => prev + element.height) + logoImage.height;
