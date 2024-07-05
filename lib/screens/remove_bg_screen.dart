@@ -1,29 +1,31 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
-import 'package:snapit/screens/deepai_api_service.dart';
+import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
 import 'frame_selection_screen.dart';
 import 'dart:math';
+import 'package:local_rembg/local_rembg.dart';
 
-class ChangeStyleOfUploadedImageScreen extends StatefulWidget {
+class RemoveBackGroundScreen extends StatefulWidget {
   final CameraDescription camera;
 
-  ChangeStyleOfUploadedImageScreen({required this.camera});
+  RemoveBackGroundScreen({required this.camera});
 
   @override
-  _ChangeStyleOfUploadedImageScreenState createState() =>
-      _ChangeStyleOfUploadedImageScreenState();
+  _RemoveBackGroundScreenState createState() =>
+      _RemoveBackGroundScreenState();
 }
 
-class _ChangeStyleOfUploadedImageScreenState
-    extends State<ChangeStyleOfUploadedImageScreen> {
-  final DeepAiApiService deepAiApiService = DeepAiApiService();
+class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
   List<File> uploadedImages = [];
   List<String> processedImageUrls = [];
   TextEditingController _textController = TextEditingController();
   bool isLoading = false;
+  Uint8List? imageBytes;
+  String? message;
 
   Future<void> _pickImage() async {
     final pickedFile =
@@ -35,28 +37,33 @@ class _ChangeStyleOfUploadedImageScreenState
     }
   }
 
+  Future<String> _saveImageToFileSystem(Uint8List imageBytes) async {
+    Directory directory = await getApplicationDocumentsDirectory();
+    String fileName = "processed_${DateTime.now().millisecondsSinceEpoch}.png";
+    File file = File('${directory.path}/$fileName');
+    await file.writeAsBytes(imageBytes);
+    return file.path;
+  }
+
   Future<void> _processImages() async {
     setState(() {
       isLoading = true;
     });
 
     final random = Random();
+    List<String> processedImageUrls = [];
 
     for (var imageFile in uploadedImages) {
       try {
-        final aiSelfieResponse = await deepAiApiService.aiSelfieGenerator(
-          imageFile: imageFile,
-          text: _textController.text,
-        );
-        final aiSelfieData = json.decode(aiSelfieResponse);
-        final aiSelfieImageUrl = aiSelfieData['output_url'];
-
-        final removeBgResponse =
-            await deepAiApiService.removeBackground(aiSelfieImageUrl);
-        final removeBgData = json.decode(removeBgResponse);
-        final removeBgImageUrl = removeBgData['output_url'];
-
-        processedImageUrls.add(removeBgImageUrl);
+        LocalRembgResultModel localRembgResultModel =
+            await LocalRembg.removeBackground(imagePath: imageFile.path); 
+        if (localRembgResultModel.status == 1) {
+          Uint8List imageBytes = Uint8List.fromList(localRembgResultModel.imageBytes!);
+          String imageUrl = await _saveImageToFileSystem(imageBytes);
+          processedImageUrls.add(imageUrl);
+        } else {
+          throw Exception('Background removal failed: ${localRembgResultModel.errorMessage}');
+        }
       } catch (e) {
         print('Error processing image: $e');
       }
@@ -68,24 +75,22 @@ class _ChangeStyleOfUploadedImageScreenState
 
     print('Generated image URLs: $processedImageUrls');
 
-
-    if (processedImageUrls.length != 4) { // Add random images to fill the list
-      while(processedImageUrls.length < 4) {
-        String tmpImageUrls = processedImageUrls[random.nextInt(processedImageUrls.length)];
-        processedImageUrls.add(tmpImageUrls);
-      }
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => FrameSelectionScreen(
-          camera: widget.camera,
-          overlayImages: processedImageUrls,
+    if (processedImageUrls.length >= 4) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FrameSelectionScreen(
+            camera: widget.camera,
+            overlayImages: processedImageUrls,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      // Handle the error or inform the user
+      print('Not enough images processed successfully.');
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {

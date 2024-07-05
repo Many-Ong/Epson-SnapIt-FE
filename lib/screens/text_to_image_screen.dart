@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:snapit/services/deepai_api_service.dart';
+import 'package:snapit/screens/deepai_api_service.dart';
 import 'frame_selection_screen.dart';
 //테스트용 파일 추가
 import 'package:flutter/services.dart';
