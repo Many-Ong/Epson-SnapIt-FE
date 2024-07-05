@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:snapit/screens/remove_bg_screen.dart';
 import 'text_to_image_screen.dart';
 import 'change_style_of_uploaded_image_screen.dart';
 
@@ -74,6 +75,34 @@ class AISelectionScreen extends StatelessWidget {
                           ),
                         ),
                         child: const Text('Change Style of Your Own Images'),
+                      ),
+                    ),
+                  ),
+                  Expanded( 
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  RemoveBackGroundScreen(
+                                      camera: camera),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 16, horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                16), // Reduced border radius
+                          ),
+                        ),
+                        child: const Text('Upload Your Images and Make Own Frame'),
                       ),
                     ),
                   ),
