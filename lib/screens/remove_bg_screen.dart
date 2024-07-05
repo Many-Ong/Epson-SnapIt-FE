@@ -8,7 +8,6 @@ import 'package:path_provider/path_provider.dart';
 import 'frame_selection_screen.dart';
 import 'dart:math';
 import 'package:local_rembg/local_rembg.dart';
-import 'package:image_picker/image_picker.dart';
 import '../utils/image_picker_util.dart';
 
 class RemoveBackGroundScreen extends StatefulWidget {

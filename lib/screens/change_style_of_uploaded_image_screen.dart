@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
 import 'package:snapit/screens/deepai_api_service.dart';
 import 'dart:convert';
 import 'frame_selection_screen.dart';
 import 'dart:math';
+import '../utils/image_picker_util.dart';
 
 class ChangeStyleOfUploadedImageScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -25,14 +25,10 @@ class _ChangeStyleOfUploadedImageScreenState
   TextEditingController _textController = TextEditingController();
   bool isLoading = false;
 
-  Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        uploadedImages.add(File(pickedFile.path));
-      });
-    }
+  Future<void> _pickImages() async {
+    uploadedImages =
+        await ImagePickerUtil.pickImages(context, uploadedImages, 4);
+    setState(() {});
   }
 
   Future<void> _processImages() async {
@@ -68,10 +64,11 @@ class _ChangeStyleOfUploadedImageScreenState
 
     print('Generated image URLs: $processedImageUrls');
 
-
-    if (processedImageUrls.length != 4) { // Add random images to fill the list
-      while(processedImageUrls.length < 4) {
-        String tmpImageUrls = processedImageUrls[random.nextInt(processedImageUrls.length)];
+    if (processedImageUrls.length != 4) {
+      // Add random images to fill the list
+      while (processedImageUrls.length < 4) {
+        String tmpImageUrls =
+            processedImageUrls[random.nextInt(processedImageUrls.length)];
         processedImageUrls.add(tmpImageUrls);
       }
     }
@@ -106,7 +103,7 @@ class _ChangeStyleOfUploadedImageScreenState
               ),
             ),
             ElevatedButton(
-              onPressed: _pickImage,
+              onPressed: _pickImages,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.black,
