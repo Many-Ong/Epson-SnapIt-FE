@@ -1,3 +1,5 @@
+// lib/screens/remove_bg_screen.dart
+
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'frame_selection_screen.dart';
 import 'dart:math';
 import 'package:local_rembg/local_rembg.dart';
 import 'package:image_picker/image_picker.dart';
+import '../utils/image_picker_util.dart';
 
 class RemoveBackGroundScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -26,33 +29,9 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
   String? message;
 
   Future<void> _pickImages() async {
-    // Calculate the number of images that can be picked
-    int remainingImages = 4 - uploadedImages.length;
-    if (remainingImages <= 0) {
-      // Show a message if the limit is reached
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('You can only upload up to 4 images.'),
-        ),
-      );
-      return;
-    }
-
-    // Pick images
-    final List<XFile>? pickedFiles = await ImagePicker().pickMultiImage();
-    if (pickedFiles != null && pickedFiles.isNotEmpty) {
-      List<File> imageFiles =
-          pickedFiles.map((file) => File(file.path)).toList();
-
-      // Enforce the limit of 4 images
-      if (uploadedImages.length + imageFiles.length > 4) {
-        imageFiles = imageFiles.sublist(0, remainingImages);
-      }
-
-      setState(() {
-        uploadedImages.addAll(imageFiles);
-      });
-    }
+    uploadedImages =
+        await ImagePickerUtil.pickImages(context, uploadedImages, 4);
+    setState(() {});
   }
 
   Future<String> _saveImageToFileSystem(Uint8List imageBytes) async {

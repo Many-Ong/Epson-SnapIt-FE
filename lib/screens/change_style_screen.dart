@@ -3,28 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'camera_screen.dart';
 import 'package:camera/camera.dart';
+import '../utils/image_picker_util.dart';
 
-class ImageUploadScreen extends StatefulWidget {
+class ChangeStyleScreen extends StatefulWidget {
   final CameraDescription camera;
   final Color frameColor;
 
-  ImageUploadScreen({required this.camera, required this.frameColor});
+  ChangeStyleScreen({required this.camera, required this.frameColor});
 
   @override
-  _ImageUploadScreenState createState() => _ImageUploadScreenState();
+  _ChangeStyleScreenState createState() => _ChangeStyleScreenState();
 }
 
-class _ImageUploadScreenState extends State<ImageUploadScreen> {
+class _ChangeStyleScreenState extends State<ChangeStyleScreen> {
   List<File> uploadedImages = [];
 
-  Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        uploadedImages.add(File(pickedFile.path));
-      });
-    }
+  Future<void> _pickImages() async {
+    uploadedImages =
+        await ImagePickerUtil.pickImages(context, uploadedImages, 4);
+    setState(() {});
   }
 
   @override
@@ -37,8 +34,8 @@ class _ImageUploadScreenState extends State<ImageUploadScreen> {
         child: Column(
           children: [
             ElevatedButton(
-              onPressed: _pickImage,
-              child: Text('Upload Image'),
+              onPressed: uploadedImages.length < 4 ? _pickImages : null,
+              child: Text('Upload Images'),
             ),
             Expanded(
               child: GridView.builder(
