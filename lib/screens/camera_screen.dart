@@ -47,7 +47,7 @@ class _CameraScreenState extends State<CameraScreen> {
     );
     _controller = CameraController(frontCamera, ResolutionPreset.medium);
     // Ensure that the camera is initialized
-    _initializeControllerFuture = _controller.initialize().then((_) async { 
+    _initializeControllerFuture = _controller.initialize().then((_) async {
       if (!mounted) return;
 
       await _controller.setExposureMode(ExposureMode.auto);
@@ -71,6 +71,31 @@ class _CameraScreenState extends State<CameraScreen> {
     });
   }
 
+  Future<Widget> _buildOverlayImage() async {
+    String overlayPath = widget.overlayImages[overlayIndex];
+    img.Image overlayImage;
+
+    if (overlayPath.startsWith('http')) {
+      final response = await http.get(Uri.parse(overlayPath));
+      Uint8List bytes = response.bodyBytes;
+      overlayImage = img.decodeImage(bytes)!;
+    } else {
+      overlayImage = img.decodeImage(File(overlayPath).readAsBytesSync())!;
+    }
+
+    Size previewSize = _controller.value.previewSize!;
+    double overlayWidth = previewSize.height;
+    double overlayHeight =
+        (overlayWidth * overlayImage.height / overlayImage.width)
+            .roundToDouble();
+
+    return flutter.Image.memory(
+      Uint8List.fromList(img.encodePng(img.copyResize(overlayImage,
+          width: overlayWidth.round(), height: overlayHeight.round()))),
+      fit: BoxFit.contain,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,35 +108,41 @@ class _CameraScreenState extends State<CameraScreen> {
               children: <Widget>[
                 Center(
                   child: AspectRatio(
-                    aspectRatio: 4 / 3, // 부모 위젯의 비율을 1:1로 유지
+                    // aspectRatio: 4 / 3, // Adjust the aspect ratio as needed
+                    aspectRatio: 3 / 4, // Adjust the aspect ratio as needed
                     child: ClipRect(
-                    child: OverflowBox(
-                      alignment: Alignment.center,
-                      child: FittedBox(
-                        fit: BoxFit.fitWidth,
-                        child: Container(
-                          width: _controller.value.previewSize!.height,
-                          height: _controller.value.previewSize!.width,
-                          child: CameraPreview(_controller), // This is your camera preview
+                      child: OverflowBox(
+                        alignment: Alignment.center,
+                        child: FittedBox(
+                          fit: BoxFit
+                              .cover, // Use BoxFit.cover to match cropping behavior
+                          child: Container(
+                            width: _controller.value.previewSize!.height,
+                            height: _controller.value.previewSize!.width,
+                            child: CameraPreview(
+                                _controller), // This is your camera preview
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                ),
-                Center(
-                  child: AspectRatio(
-                    aspectRatio: 4 / 3,
-                    child: widget.overlayImages[overlayIndex].startsWith('http')
-                        ? flutter.Image.network(
-                            widget.overlayImages[overlayIndex],
-                            fit: BoxFit.contain,
-                          )
-                        : flutter.Image.file(
-                            File(widget.overlayImages[overlayIndex]),
-                            fit: BoxFit.contain,
-                          ),
-                  ),
+                FutureBuilder<Widget>(
+                  future: _buildOverlayImage(),
+                  builder: (context, overlaySnapshot) {
+                    if (overlaySnapshot.connectionState ==
+                        ConnectionState.done) {
+                      return Center(
+                        child: AspectRatio(
+                          // aspectRatio: 4 / 3,
+                          aspectRatio: 3 / 4,
+                          child: overlaySnapshot.data,
+                        ),
+                      );
+                    } else {
+                      return Container();
+                    }
+                  },
                 ),
               ],
             );
@@ -186,7 +217,8 @@ class _CameraScreenState extends State<CameraScreen> {
     // Crop the image around the center
     int startX = (baseImage.width - targetWidth) ~/ 2;
     int startY = (baseImage.height - targetHeight) ~/ 2;
-    img.Image croppedImage = img.copyCrop(flippedImage, startX, startY, targetWidth, targetHeight);
+    img.Image croppedImage =
+        img.copyCrop(flippedImage, startX, startY, targetWidth, targetHeight);
 
     img.Image overlayImage;
     if (overlayPath.startsWith('http')) {
@@ -197,27 +229,39 @@ class _CameraScreenState extends State<CameraScreen> {
       overlayImage = img.decodeImage(File(overlayPath).readAsBytesSync())!;
     }
 
+    // img.Image resizedOverlayImage = img.copyResize(
+    //   overlayImage,
+    //   width: croppedImage.width,
+    //   height: (croppedImage.width * overlayImage.height / overlayImage.width)
+    //       .round(),
+    // );
     img.Image resizedOverlayImage = img.copyResize(
       overlayImage,
-      width: croppedImage.width,
-      height:
-          (croppedImage.width * overlayImage.height / overlayImage.width).round(),
+      width: flippedImage.width,
+      height: (flippedImage.width * overlayImage.height / overlayImage.width)
+          .round(),
     );
 
-    int offsetX = (croppedImage.width - resizedOverlayImage.width) ~/ 2;
-    int offsetY = (croppedImage.height - resizedOverlayImage.height) ~/ 2;
-    img.copyInto(croppedImage, resizedOverlayImage,
+    // int offsetX = (croppedImage.width - resizedOverlayImage.width) ~/ 2;
+    // int offsetY = (croppedImage.height - resizedOverlayImage.height) ~/ 2;
+    // img.copyInto(croppedImage, resizedOverlayImage,
+    //     dstX: offsetX, dstY: offsetY);
+    int offsetX = (flippedImage.width - resizedOverlayImage.width) ~/ 2;
+    int offsetY = (flippedImage.height - resizedOverlayImage.height) ~/ 2;
+    img.copyInto(flippedImage, resizedOverlayImage,
         dstX: offsetX, dstY: offsetY);
 
     String newPath = '${file.parent.path}/merged_${DateTime.now()}.png';
+    // File newImageFile = File(newPath)
+    //   ..writeAsBytesSync(img.encodePng(croppedImage));
     File newImageFile = File(newPath)
-      ..writeAsBytesSync(img.encodePng(croppedImage));
+      ..writeAsBytesSync(img.encodePng(flippedImage));
     print('New image saved at: $newPath');
     return newImageFile.path;
   }
 
   Future<String> mergeFourImages(
-    List<String> imagePaths, Color backgroundColor) async {
+      List<String> imagePaths, Color backgroundColor) async {
     List<img.Image> images = [];
 
     for (String path in imagePaths) {
@@ -225,7 +269,7 @@ class _CameraScreenState extends State<CameraScreen> {
       images.add(image);
     }
 
-    //logo 이미지 코드
+    // logo 이미지 코드
     ByteData logoData = await rootBundle.load('assets/logo.png');
     img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
     // 배경이 흰색인 경우 검정색으로 변환
@@ -239,29 +283,48 @@ class _CameraScreenState extends State<CameraScreen> {
       }
     }
 
-    int width = images[0].width;
-    int height = images.fold(0, (prev, element) => prev + element.height) + logoImage.height;
+    int imageWidth = images[0].width;
+    int imageHeight = images[0].height;
+    int gap = 20; // Define the gap between images
+    int width = (imageWidth * 2) +
+        (3 * gap); // Two images side by side with padding and gaps
+    int height = (imageHeight * 2) +
+        (3 * gap) +
+        logoImage.height +
+        gap; // Two rows of images with padding and gaps
 
-    img.Image mergedFourImage = img.Image(width + 80, height + 270);
+    img.Image mergedImage = img.Image(width, height);
 
     // Set background color
     img.fill(
-        mergedFourImage,
-        img.getColor(
-            backgroundColor.red, backgroundColor.green, backgroundColor.blue));
+      mergedImage,
+      img.getColor(
+        backgroundColor.red,
+        backgroundColor.green,
+        backgroundColor.blue,
+      ),
+    );
 
-    int offsetY = 40;
-    for (img.Image image in images) {
-      img.copyInto(mergedFourImage, image, dstX: 40, dstY: offsetY);
-      offsetY += (image.height + 40);
-    }
-    // SnapIT 이미지를 하단에 복사
-    img.copyInto(mergedFourImage, logoImage,
-    dstX: (mergedFourImage.width - logoImage.width) ~/ 2, dstY: offsetY + 20);
+    // Copy images to the merged image in a 2x2 grid with gaps
+    img.copyInto(mergedImage, images[0], dstX: gap, dstY: gap);
+    img.copyInto(mergedImage, images[1],
+        dstX: imageWidth + (2 * gap), dstY: gap);
+    img.copyInto(mergedImage, images[2],
+        dstX: gap, dstY: imageHeight + (2 * gap));
+    img.copyInto(mergedImage, images[3],
+        dstX: imageWidth + (2 * gap), dstY: imageHeight + (2 * gap));
+
+    // SnapIT 이미지 복사
+    img.copyInto(
+      mergedImage,
+      logoImage,
+      dstX: (mergedImage.width - logoImage.width) ~/ 2,
+      dstY: (imageHeight * 2) + (3 * gap),
+    );
 
     Directory dic = await getApplicationDocumentsDirectory();
     String filename = '${dic.path}/merged_${DateTime.now()}.png';
-    File(filename).writeAsBytesSync(img.encodePng(mergedFourImage));
+    File(filename).writeAsBytesSync(img.encodePng(mergedImage));
     return filename;
   }
 }
