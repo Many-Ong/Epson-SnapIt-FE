@@ -106,6 +106,12 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
               ),
               child: Text('Upload Images'),
             ),
+            SizedBox(height: 10),
+            Text(
+              '${uploadedImages.length}/4 selected',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 16),
             Expanded(
               child: GridView.builder(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

@@ -102,6 +102,7 @@ class _ChangeStyleOfUploadedImageScreenState
                 ),
               ),
             ),
+            SizedBox(height: 10),
             ElevatedButton(
               onPressed: _pickImages,
               style: ElevatedButton.styleFrom(
@@ -110,13 +111,35 @@ class _ChangeStyleOfUploadedImageScreenState
               ),
               child: Text('Upload Image'),
             ),
+            SizedBox(height: 10),
+            Text(
+              '${uploadedImages.length}/4 selected',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 16),
             Expanded(
               child: GridView.builder(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2),
                 itemCount: uploadedImages.length,
                 itemBuilder: (context, index) {
-                  return Image.file(uploadedImages[index]);
+                  return Stack(
+                    children: [
+                      Image.file(uploadedImages[index]),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: IconButton(
+                          icon: Icon(Icons.remove_circle, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              uploadedImages.removeAt(index);
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  );
                 },
               ),
             ),
