@@ -43,22 +43,22 @@ class DisplayPictureScreen extends StatelessWidget {
       ),
       floatingActionButton: Stack(
         children: [
-          Align(
-            alignment: Alignment.bottomRight,
-            child: FloatingActionButton(
-              backgroundColor: Colors.white,
-              onPressed: () async {
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => PrintScreen(imagePath: imagePath),
-                  ),
-                );
-              },
-              child: Icon(Icons.print, color: Colors.black),
-            ),
-          ),
+          // Align(
+          //   alignment: Alignment.bottomRight,
+          //   child: FloatingActionButton(
+          //     backgroundColor: Colors.white,
+          //     onPressed: () async {
+          //       await Navigator.of(context).push(
+          //         MaterialPageRoute(
+          //           builder: (context) => PrintScreen(imagePath: imagePath),
+          //         ),
+          //       );
+          //     },
+          //     child: Icon(Icons.print, color: Colors.black),
+          //   ),
+          // ),
           Padding(
-            padding: const EdgeInsets.only(right: 80.0),
+            padding: const EdgeInsets.only(right: 0.0),
             child: Align(
               alignment: Alignment.bottomRight,
               child: FloatingActionButton(
