@@ -1,13 +1,14 @@
+// lib/screens/remove_bg_screen.dart
+
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:camera/camera.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:convert';
 import 'frame_selection_screen.dart';
 import 'dart:math';
 import 'package:local_rembg/local_rembg.dart';
+import '../utils/image_picker_util.dart';
 
 class RemoveBackGroundScreen extends StatefulWidget {
   final CameraDescription camera;
@@ -15,8 +16,7 @@ class RemoveBackGroundScreen extends StatefulWidget {
   RemoveBackGroundScreen({required this.camera});
 
   @override
-  _RemoveBackGroundScreenState createState() =>
-      _RemoveBackGroundScreenState();
+  _RemoveBackGroundScreenState createState() => _RemoveBackGroundScreenState();
 }
 
 class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
@@ -27,14 +27,10 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
   Uint8List? imageBytes;
   String? message;
 
-  Future<void> _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        uploadedImages.add(File(pickedFile.path));
-      });
-    }
+  Future<void> _pickImages() async {
+    uploadedImages =
+        await ImagePickerUtil.pickImages(context, uploadedImages, 4);
+    setState(() {});
   }
 
   Future<String> _saveImageToFileSystem(Uint8List imageBytes) async {
@@ -56,13 +52,15 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
     for (var imageFile in uploadedImages) {
       try {
         LocalRembgResultModel localRembgResultModel =
-            await LocalRembg.removeBackground(imagePath: imageFile.path); 
+            await LocalRembg.removeBackground(imagePath: imageFile.path);
         if (localRembgResultModel.status == 1) {
-          Uint8List imageBytes = Uint8List.fromList(localRembgResultModel.imageBytes!);
+          Uint8List imageBytes =
+              Uint8List.fromList(localRembgResultModel.imageBytes!);
           String imageUrl = await _saveImageToFileSystem(imageBytes);
           processedImageUrls.add(imageUrl);
         } else {
-          throw Exception('Background removal failed: ${localRembgResultModel.errorMessage}');
+          throw Exception(
+              'Background removal failed: ${localRembgResultModel.errorMessage}');
         }
       } catch (e) {
         print('Error processing image: $e');
@@ -91,7 +89,6 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,30 +98,43 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                controller: _textController,
-                decoration: InputDecoration(
-                  hintText: 'Enter style description',
-                ),
-              ),
-            ),
             ElevatedButton(
-              onPressed: _pickImage,
+              onPressed: uploadedImages.length < 4 ? _pickImages : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.black,
               ),
-              child: Text('Upload Image'),
+              child: Text('Upload Images'),
             ),
+            SizedBox(height: 10),
+            Text(
+              '${uploadedImages.length}/4 selected',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 16),
             Expanded(
               child: GridView.builder(
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2),
                 itemCount: uploadedImages.length,
                 itemBuilder: (context, index) {
-                  return Image.file(uploadedImages[index]);
+                  return Stack(
+                    children: [
+                      Image.file(uploadedImages[index]),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: IconButton(
+                          icon: Icon(Icons.remove_circle, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              uploadedImages.removeAt(index);
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  );
                 },
               ),
             ),
