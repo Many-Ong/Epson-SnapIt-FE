@@ -46,6 +46,8 @@ dependencies:
   dart_format: ^1.1.4
   local_rembg: 0.0.8
   multi_image_picker: ^4.8.0
+  share_plus: ^6.0.1
+  social_share: ^2.0.5
 
 dev_dependencies:
   flutter_test:
