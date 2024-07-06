@@ -47,7 +47,7 @@ class _CameraScreenState extends State<CameraScreen> {
     );
     _controller = CameraController(frontCamera, ResolutionPreset.medium);
     // Ensure that the camera is initialized
-    _initializeControllerFuture = _controller.initialize().then((_) async { 
+    _initializeControllerFuture = _controller.initialize().then((_) async {
       if (!mounted) return;
 
       await _controller.setExposureMode(ExposureMode.auto);
@@ -85,19 +85,20 @@ class _CameraScreenState extends State<CameraScreen> {
                   child: AspectRatio(
                     aspectRatio: 4 / 3, // 부모 위젯의 비율을 1:1로 유지
                     child: ClipRect(
-                    child: OverflowBox(
-                      alignment: Alignment.center,
-                      child: FittedBox(
-                        fit: BoxFit.fitWidth,
-                        child: Container(
-                          width: _controller.value.previewSize!.height,
-                          height: _controller.value.previewSize!.width,
-                          child: CameraPreview(_controller), // This is your camera preview
+                      child: OverflowBox(
+                        alignment: Alignment.center,
+                        child: FittedBox(
+                          fit: BoxFit.fitWidth,
+                          child: Container(
+                            width: _controller.value.previewSize!.height,
+                            height: _controller.value.previewSize!.width,
+                            child: CameraPreview(
+                                _controller), // This is your camera preview
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
                 ),
                 Center(
                   child: AspectRatio(
@@ -186,7 +187,8 @@ class _CameraScreenState extends State<CameraScreen> {
     // Crop the image around the center
     int startX = (baseImage.width - targetWidth) ~/ 2;
     int startY = (baseImage.height - targetHeight) ~/ 2;
-    img.Image croppedImage = img.copyCrop(flippedImage, startX, startY, targetWidth, targetHeight);
+    img.Image croppedImage =
+        img.copyCrop(flippedImage, startX, startY, targetWidth, targetHeight);
 
     img.Image overlayImage;
     if (overlayPath.startsWith('http')) {
@@ -200,8 +202,8 @@ class _CameraScreenState extends State<CameraScreen> {
     img.Image resizedOverlayImage = img.copyResize(
       overlayImage,
       width: croppedImage.width,
-      height:
-          (croppedImage.width * overlayImage.height / overlayImage.width).round(),
+      height: (croppedImage.width * overlayImage.height / overlayImage.width)
+          .round(),
     );
 
     int offsetX = (croppedImage.width - resizedOverlayImage.width) ~/ 2;
@@ -217,7 +219,7 @@ class _CameraScreenState extends State<CameraScreen> {
   }
 
   Future<String> mergeFourImages(
-    List<String> imagePaths, Color backgroundColor) async {
+      List<String> imagePaths, Color backgroundColor) async {
     List<img.Image> images = [];
 
     for (String path in imagePaths) {
@@ -239,10 +241,16 @@ class _CameraScreenState extends State<CameraScreen> {
       }
     }
 
-    int width = images[0].width;
-    int height = images.fold(0, (prev, element) => prev + element.height) + logoImage.height;
+    int imageWidth = images[0].width;
+    int imageHeight = images[0].height;
 
-    img.Image mergedFourImage = img.Image(width + 80, height + 270);
+    int gap = 20;
+
+    int width = (imageWidth * 2) +
+        (7 * gap); // Two images side by side with padding and gaps
+    int height = (imageHeight * 4) + (3 * gap) + logoImage.height + gap;
+
+    img.Image mergedFourImage = img.Image(width, height + 270);
 
     // Set background color
     img.fill(
@@ -252,12 +260,16 @@ class _CameraScreenState extends State<CameraScreen> {
 
     int offsetY = 40;
     for (img.Image image in images) {
-      img.copyInto(mergedFourImage, image, dstX: 40, dstY: offsetY);
-      offsetY += (image.height + 40);
+      img.copyInto(mergedFourImage, image, dstX: gap * 2, dstY: offsetY);
+      offsetY += (image.height + 2 * gap);
     }
     // SnapIT 이미지를 하단에 복사
     img.copyInto(mergedFourImage, logoImage,
-    dstX: (mergedFourImage.width - logoImage.width) ~/ 2, dstY: offsetY + 20);
+        dstX: (mergedFourImage.width ~/ 2 - logoImage.width) ~/ 2,
+        dstY: offsetY + gap);
+
+    img.copyInto(mergedFourImage, mergedFourImage,
+        dstX: mergedFourImage.width ~/ 2, dstY: 0);
 
     Directory dic = await getApplicationDocumentsDirectory();
     String filename = '${dic.path}/merged_${DateTime.now()}.png';

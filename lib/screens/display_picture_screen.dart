@@ -32,14 +32,6 @@ class DisplayPictureScreen extends StatelessWidget {
       backgroundTopColor: "#ffffff",
       backgroundBottomColor: "#000000",
     );
-
-    final File imageFile = File(imagePath);
-    final Uint8List imageBytes = await imageFile.readAsBytes();
-    final tempDir = await getTemporaryDirectory();
-    final tempFile = await File('${tempDir.path}/temp_image.jpg').create();
-    await tempFile.writeAsBytes(imageBytes);
-
-    final XFile xFile = XFile(tempFile.path);
   }
 
   Future<void> shareImageToInstagramFeed() async {
@@ -53,6 +45,7 @@ class DisplayPictureScreen extends StatelessWidget {
 
     Share.shareXFiles([xFile],
         sharePositionOrigin: Rect.fromLTWH(0, 0, 1, 1),
+        subject: '1110657243906107',
         text: 'Check out my post on Instagram!');
   }
 
@@ -63,42 +56,85 @@ class DisplayPictureScreen extends StatelessWidget {
         title: const Text('Display the Picture'),
       ),
       body: SafeArea(
-        child: Center(
-          child: Container(
-            color: Colors.black,
-            child: Image.file(
-              File(imagePath),
-              fit: BoxFit
-                  .cover, // Ensure the image fits within the bounds without distortion
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            SizedBox(height: 40),
+            Flexible(
+              flex: 3,
+              child: Center(
+                child: Image.file(File(imagePath), fit: BoxFit.cover),
+              ),
             ),
-          ),
+            SizedBox(height: 120),
+          ],
         ),
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
+      floatingActionButtonLocation: FloatingActionButtonLocation
+          .centerFloat, // Center the floating action button row
+      floatingActionButton: Row(
+        mainAxisSize:
+            MainAxisSize.min, // Shrink the row to the size of its children
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          FloatingActionButton(
-            backgroundColor: Colors.white,
-            onPressed: () async {
-              await saveImageToGallery();
-            },
-            child: Icon(Icons.download, color: Colors.black),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                  color: Colors.white, width: 3), // Set border color and width
+              borderRadius: BorderRadius.circular(
+                  20), // Match the border radius to the FloatingActionButton
+            ),
+            child: FloatingActionButton(
+              backgroundColor: Colors.transparent,
+              onPressed: () async {
+                await saveImageToGallery();
+              },
+              child: Icon(
+                Icons.download,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
           ),
-          const SizedBox(height: 10),
-          FloatingActionButton(
-            backgroundColor: Colors.white,
-            onPressed: () async {
-              await shareImageToInstagramStory();
-            },
-            child: Icon(Icons.insert_photo, color: Colors.black),
+          const SizedBox(width: 10),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                  color: Colors.white, width: 3), // Set border color and width
+              borderRadius: BorderRadius.circular(
+                  20), // Match the border radius to the FloatingActionButton
+            ),
+            child: FloatingActionButton(
+              backgroundColor: Colors.transparent,
+              onPressed: () async {
+                await shareImageToInstagramStory();
+              },
+              child: Image.asset(
+                'assets/instagram_icon_bw.png',
+                width: 28,
+                height: 28,
+              ),
+            ),
           ),
-          const SizedBox(height: 10),
-          FloatingActionButton(
-            backgroundColor: Colors.white,
-            onPressed: () async {
-              await shareImageToInstagramFeed();
-            },
-            child: Icon(Icons.share, color: Colors.black),
+          const SizedBox(width: 10),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(
+                  color: Colors.white, width: 3), // Set border color and width
+              borderRadius: BorderRadius.circular(
+                  20), // Match the border radius to the FloatingActionButton
+            ),
+            child: FloatingActionButton(
+              backgroundColor: Colors.transparent,
+              onPressed: () async {
+                await shareImageToInstagramFeed();
+              },
+              child: Icon(
+                Icons.share,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
           ),
         ],
       ),
