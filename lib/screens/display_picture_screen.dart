@@ -5,6 +5,7 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart'; // Import the share_plus package
 import 'package:path_provider/path_provider.dart'; // Import the path_provider package
+import 'package:snapit/screens/home_screen.dart';
 import 'package:social_share/social_share.dart';
 
 class DisplayPictureScreen extends StatelessWidget {
@@ -53,7 +54,19 @@ class DisplayPictureScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Display the Picture'),
+        automaticallyImplyLeading: false, // Removes the default back button
+        actions: [
+          IconButton(
+            icon: Icon(Icons.close),
+            onPressed: () {
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                    builder: (context) => HomeScreen(camerasAvailable: true)),
+                (Route<dynamic> route) => false,
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
