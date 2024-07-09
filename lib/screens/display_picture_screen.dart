@@ -7,12 +7,14 @@ import 'package:share_plus/share_plus.dart'; // Import the share_plus package
 import 'package:path_provider/path_provider.dart'; // Import the path_provider package
 import 'package:snapit/screens/home_screen.dart';
 import 'package:social_share/social_share.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class DisplayPictureScreen extends StatelessWidget {
   final String imagePath;
+  final String appId;
 
-  DisplayPictureScreen(
-      {required this.imagePath, required BuildContext context});
+  DisplayPictureScreen({required this.imagePath, required BuildContext context})
+      : appId = dotenv.env['APP_ID']!;
 
   Future<void> saveImageToGallery() async {
     final result = await Permission.storage.request();
@@ -28,7 +30,7 @@ class DisplayPictureScreen extends StatelessWidget {
 
   Future<void> shareImageToInstagramStory() async {
     await SocialShare.shareInstagramStory(
-      appId: '1110657243906107',
+      appId: appId,
       imagePath: imagePath,
       backgroundTopColor: "#ffffff",
       backgroundBottomColor: "#000000",
@@ -46,7 +48,7 @@ class DisplayPictureScreen extends StatelessWidget {
 
     Share.shareXFiles([xFile],
         sharePositionOrigin: Rect.fromLTWH(0, 0, 1, 1),
-        subject: '1110657243906107',
+        subject: appId,
         text: 'Check out my post on Instagram!');
   }
 
