@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:snapit/screens/camera_screen.dart';
 import 'package:snapit/screens/deepai_api_service.dart';
 import 'dart:convert';
-import 'frame_selection_screen.dart';
 import 'dart:math';
 import '../utils/image_picker_util.dart';
 
@@ -73,7 +73,7 @@ class _ChangeStyleOfUploadedImageScreenState
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FrameSelectionScreen(
+        builder: (context) => CameraScreen(
           overlayImages: processedImageUrls,
         ),
       ),

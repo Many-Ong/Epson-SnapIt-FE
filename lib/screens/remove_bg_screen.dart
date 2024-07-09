@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'frame_selection_screen.dart';
+import 'package:snapit/screens/camera_screen.dart';
 import 'dart:math';
 import 'package:local_rembg/local_rembg.dart';
 import '../utils/image_picker_util.dart';
@@ -74,9 +74,7 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => FrameSelectionScreen(
-            overlayImages: processedImageUrls,
-          ),
+          builder: (context) => CameraScreen(overlayImages: processedImageUrls),
         ),
       );
     } else {

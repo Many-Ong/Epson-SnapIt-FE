@@ -28,7 +28,7 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
     Colors.white,
   ];
 
-  Color selectedFrameColor = Colors.blue; // Default color
+  Color selectedFrameColor = Colors.white;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +90,6 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => CameraScreen(
-                        frameColor: selectedFrameColor,
                         overlayImages: widget.overlayImages,
                       ),
                     ),

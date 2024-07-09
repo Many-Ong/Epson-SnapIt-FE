@@ -10,12 +10,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 
 class CameraScreen extends StatefulWidget {
-  final Color frameColor;
   final List<String> overlayImages;
 
   const CameraScreen({
     super.key,
-    required this.frameColor,
     required this.overlayImages,
   });
 
@@ -28,7 +26,7 @@ class _CameraScreenState extends State<CameraScreen> {
   late Future<void> _initializeControllerFuture;
   List<CameraDescription> cameras = [];
   int pictureCount = 0;
-  List<String> takePictures = [];
+  List<String> takenPictures = [];
   int overlayIndex = 0; // New variable to keep track of the overlay image index
 
   @override
@@ -81,7 +79,7 @@ class _CameraScreenState extends State<CameraScreen> {
               children: <Widget>[
                 Center(
                   child: AspectRatio(
-                    aspectRatio: 4 / 3, // 부모 위젯의 비율을 1:1로 유지
+                    aspectRatio: 4 / 3,
                     child: ClipRect(
                       child: OverflowBox(
                         alignment: Alignment.center,
@@ -142,22 +140,21 @@ class _CameraScreenState extends State<CameraScreen> {
                                   await _controller.takePicture();
                               String overlayImagePath = await mergeImage(
                                   image, widget.overlayImages[overlayIndex]);
-                              takePictures.add(overlayImagePath);
+                              takenPictures.add(overlayImagePath);
                               changeOverlayImage();
                               pictureCount++;
 
                               if (pictureCount == 4) {
-                                String mergedImagePath = await mergeFourImages(
-                                    takePictures, widget.frameColor);
                                 await Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) => DisplayPictureScreen(
-                                        imagePath: mergedImagePath,
-                                        context: context),
+                                      takenPictures: takenPictures,
+                                      context: context,
+                                    ),
                                   ),
                                 );
                                 pictureCount = 0;
-                                takePictures.clear();
+                                takenPictures.clear();
                               }
                             }
                           } catch (e) {
@@ -233,64 +230,5 @@ class _CameraScreenState extends State<CameraScreen> {
       ..writeAsBytesSync(img.encodePng(croppedImage));
     print('New image saved at: $newPath');
     return newImageFile.path;
-  }
-
-  Future<String> mergeFourImages(
-      List<String> imagePaths, Color backgroundColor) async {
-    List<img.Image> images = [];
-
-    for (String path in imagePaths) {
-      img.Image image = img.decodeImage(File(path).readAsBytesSync())!;
-      images.add(image);
-    }
-
-    //logo 이미지 코드
-    ByteData logoData = await rootBundle.load('assets/logo.png');
-    img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
-    // 배경이 흰색인 경우 검정색으로 변환
-    if (backgroundColor == Colors.white) {
-      for (int y = 0; y < logoImage.height; y++) {
-        for (int x = 0; x < logoImage.width; x++) {
-          if (logoImage.getPixel(x, y) == img.getColor(255, 255, 255)) {
-            logoImage.setPixel(x, y, img.getColor(0, 0, 0));
-          }
-        }
-      }
-    }
-
-    int imageWidth = images[0].width;
-    int imageHeight = images[0].height;
-
-    int gap = 35;
-
-    int width = (imageWidth * 2) +
-        (7 * gap); // Two images side by side with padding and gaps
-    int height = (imageHeight * 4) + (3 * gap) + logoImage.height + gap;
-
-    img.Image mergedFourImage = img.Image(width, height + 360);
-
-    // Set background color
-    img.fill(
-        mergedFourImage,
-        img.getColor(
-            backgroundColor.red, backgroundColor.green, backgroundColor.blue));
-
-    int offsetY = 60;
-    for (img.Image image in images) {
-      img.copyInto(mergedFourImage, image, dstX: gap * 2, dstY: offsetY);
-      offsetY += (image.height + 2 * gap);
-    }
-    // SnapIT 이미지를 하단에 복사
-    img.copyInto(mergedFourImage, logoImage,
-        dstX: (mergedFourImage.width ~/ 2 - logoImage.width) ~/ 2,
-        dstY: offsetY + gap);
-
-    img.copyInto(mergedFourImage, mergedFourImage,
-        dstX: mergedFourImage.width ~/ 2, dstY: 0);
-
-    Directory dic = await getApplicationDocumentsDirectory();
-    String filename = '${dic.path}/merged_${DateTime.now()}.png';
-    File(filename).writeAsBytesSync(img.encodePng(mergedFourImage));
-    return filename;
   }
 }
