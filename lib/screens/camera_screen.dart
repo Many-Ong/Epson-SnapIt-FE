@@ -10,13 +10,11 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 
 class CameraScreen extends StatefulWidget {
-  final CameraDescription camera;
   final Color frameColor;
   final List<String> overlayImages;
 
   const CameraScreen({
     super.key,
-    required this.camera,
     required this.frameColor,
     required this.overlayImages,
   });
@@ -45,7 +43,7 @@ class _CameraScreenState extends State<CameraScreen> {
       (camera) => camera.lensDirection == CameraLensDirection.front,
       orElse: () => cameras.first,
     );
-    _controller = CameraController(frontCamera, ResolutionPreset.medium);
+    _controller = CameraController(frontCamera, ResolutionPreset.veryHigh);
     // Ensure that the camera is initialized
     _initializeControllerFuture = _controller.initialize().then((_) async {
       if (!mounted) return;
@@ -74,7 +72,7 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Camera')),
+      appBar: AppBar(),
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
@@ -263,13 +261,13 @@ class _CameraScreenState extends State<CameraScreen> {
     int imageWidth = images[0].width;
     int imageHeight = images[0].height;
 
-    int gap = 20;
+    int gap = 35;
 
     int width = (imageWidth * 2) +
         (7 * gap); // Two images side by side with padding and gaps
     int height = (imageHeight * 4) + (3 * gap) + logoImage.height + gap;
 
-    img.Image mergedFourImage = img.Image(width, height + 270);
+    img.Image mergedFourImage = img.Image(width, height + 360);
 
     // Set background color
     img.fill(
@@ -277,7 +275,7 @@ class _CameraScreenState extends State<CameraScreen> {
         img.getColor(
             backgroundColor.red, backgroundColor.green, backgroundColor.blue));
 
-    int offsetY = 40;
+    int offsetY = 60;
     for (img.Image image in images) {
       img.copyInto(mergedFourImage, image, dstX: gap * 2, dstY: offsetY);
       offsetY += (image.height + 2 * gap);

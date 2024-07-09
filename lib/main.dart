@@ -17,28 +17,24 @@ Future<void> main() async {
 
   print('Cameras available: $camerasAvailable');
 
-  final firstCamera = camerasAvailable ? cameras.first : null;
-
-  runApp(MyApp(camera: firstCamera, camerasAvailable: camerasAvailable));
+  runApp(MyApp(camerasAvailable: camerasAvailable));
 }
 
 class MyApp extends StatelessWidget {
-  final CameraDescription? camera;
   final bool camerasAvailable;
 
-  const MyApp(
-      {super.key, required this.camera, required this.camerasAvailable});
+  const MyApp({super.key, required this.camerasAvailable});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: ThemeData.dark().copyWith( //기존 속성 유지하며 폰트만 추가
+      theme: ThemeData.dark().copyWith(
+        //기존 속성 유지하며 폰트만 추가
         textTheme: ThemeData.dark().textTheme.apply(
               fontFamily: 'AvenirNext',
             ),
       ),
       home: HomeScreen(
-        camera: camera,
         camerasAvailable: camerasAvailable,
       ), // Set HomeScreen as the home screen
     );
