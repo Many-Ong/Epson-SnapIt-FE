@@ -3,7 +3,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
 import 'package:path_provider/path_provider.dart';
 import 'frame_selection_screen.dart';
 import 'dart:math';
@@ -11,9 +10,7 @@ import 'package:local_rembg/local_rembg.dart';
 import '../utils/image_picker_util.dart';
 
 class RemoveBackGroundScreen extends StatefulWidget {
-  final CameraDescription camera;
-
-  RemoveBackGroundScreen({required this.camera});
+  RemoveBackGroundScreen();
 
   @override
   _RemoveBackGroundScreenState createState() => _RemoveBackGroundScreenState();
@@ -78,7 +75,6 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => FrameSelectionScreen(
-            camera: widget.camera,
             overlayImages: processedImageUrls,
           ),
         ),

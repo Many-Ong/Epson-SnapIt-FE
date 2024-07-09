@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
 import 'camera_screen.dart';
 
 class FrameSelectionScreen extends StatefulWidget {
-  final CameraDescription camera;
   final List<String> overlayImages;
 
-  FrameSelectionScreen(
-      {super.key, required this.camera, required this.overlayImages});
+  FrameSelectionScreen({super.key, required this.overlayImages});
 
   @override
   _FrameSelectionScreenState createState() => _FrameSelectionScreenState();
@@ -93,7 +90,6 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => CameraScreen(
-                        camera: widget.camera,
                         frameColor: selectedFrameColor,
                         overlayImages: widget.overlayImages,
                       ),
