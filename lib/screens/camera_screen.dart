@@ -114,49 +114,68 @@ class _CameraScreenState extends State<CameraScreen> {
                           ),
                   ),
                 ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    child: Container(
+                      padding:
+                          EdgeInsets.all(4), // Add padding inside the container
+                      width: 70, // Set the size to match the iOS camera button
+                      height: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white,
+                          width:
+                              2, // Set the border width to match iOS camera button
+                        ),
+                      ),
+                      child: FloatingActionButton(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(45),
+                        ),
+                        onPressed: () async {
+                          try {
+                            await _initializeControllerFuture; // Ensure the future is complete before proceeding
+                            if (pictureCount < 4) {
+                              final XFile image =
+                                  await _controller.takePicture();
+                              String overlayImagePath = await mergeImage(
+                                  image, widget.overlayImages[overlayIndex]);
+                              takePictures.add(overlayImagePath);
+                              changeOverlayImage();
+                              pictureCount++;
+
+                              if (pictureCount == 4) {
+                                String mergedImagePath = await mergeFourImages(
+                                    takePictures, widget.frameColor);
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => DisplayPictureScreen(
+                                        imagePath: mergedImagePath,
+                                        context: context),
+                                  ),
+                                );
+                                pictureCount = 0;
+                                takePictures.clear();
+                              }
+                            }
+                          } catch (e) {
+                            print(e);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ),
               ],
             );
           } else {
             return const Center(child: CircularProgressIndicator());
           }
         },
-      ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            backgroundColor: Colors.white,
-            onPressed: () async {
-              try {
-                await _initializeControllerFuture; // Ensure the future is complete before proceeding
-                if (pictureCount < 4) {
-                  final XFile image = await _controller.takePicture();
-                  String overlayImagePath = await mergeImage(
-                      image, widget.overlayImages[overlayIndex]);
-                  takePictures.add(overlayImagePath);
-                  changeOverlayImage();
-                  pictureCount++;
-
-                  if (pictureCount == 4) {
-                    String mergedImagePath =
-                        await mergeFourImages(takePictures, widget.frameColor);
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => DisplayPictureScreen(
-                            imagePath: mergedImagePath, context: context),
-                      ),
-                    );
-                    pictureCount = 0;
-                    takePictures.clear();
-                  }
-                }
-              } catch (e) {
-                print(e);
-              }
-            },
-            child: const Icon(Icons.camera_alt, color: Colors.black),
-          ),
-        ],
       ),
     );
   }
