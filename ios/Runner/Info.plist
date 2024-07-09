@@ -31,10 +31,6 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone is required for recording videos</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-  <string>Need permission to save photos to your library</string>
-  <key>NSPhotoLibraryUsageDescription</key>
-  <string>Need permission to access your photo library</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Need permission to save photos to your library</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Need permission to access your photo library</string>
@@ -57,5 +53,17 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+	<string>instagram-stories</string>
+	<string>facebook-stories</string>
+	<string>facebook</string>
+	<string>instagram</string>
+	<string>twitter</string>
+	<string>whatsapp</string>
+    <string>tg</string>
+	</array>
+	<key>FacebookAppID</key>
+<string>1110657243906107</string>
 </dict>
 </plist>

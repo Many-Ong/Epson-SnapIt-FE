@@ -46,8 +46,11 @@ class _CameraScreenState extends State<CameraScreen> {
       orElse: () => cameras.first,
     );
     _controller = CameraController(frontCamera, ResolutionPreset.medium);
+    // Ensure that the camera is initialized
     _initializeControllerFuture = _controller.initialize().then((_) async {
       if (!mounted) return;
+
+      await _controller.setExposureMode(ExposureMode.auto);
       await _controller.setFlashMode(FlashMode.off);
       setState(() {});
     }).catchError((error) {
@@ -80,8 +83,21 @@ class _CameraScreenState extends State<CameraScreen> {
               children: <Widget>[
                 Center(
                   child: AspectRatio(
-                    aspectRatio: 4 / 3,
-                    child: CameraPreview(_controller),
+                    aspectRatio: 4 / 3, // 부모 위젯의 비율을 1:1로 유지
+                    child: ClipRect(
+                      child: OverflowBox(
+                        alignment: Alignment.center,
+                        child: FittedBox(
+                          fit: BoxFit.fitWidth,
+                          child: Container(
+                            width: _controller.value.previewSize!.height,
+                            height: _controller.value.previewSize!.width,
+                            child: CameraPreview(
+                                _controller), // This is your camera preview
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 Center(
@@ -156,8 +172,23 @@ class _CameraScreenState extends State<CameraScreen> {
     img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
     img.Image flippedImage = img.flipHorizontal(baseImage);
 
-    int baseWidth = baseImage.width;
-    int baseHeight = baseImage.height;
+    // Determine crop size for 4:3 ratio
+    int targetWidth, targetHeight;
+    if (baseImage.width / baseImage.height > 4 / 3) {
+      // Width is too wide for the height to fit a 4:3 ratio
+      targetHeight = baseImage.height;
+      targetWidth = (baseImage.height * 4) ~/ 3;
+    } else {
+      // Height is too high for the width to fit a 4:3 ratio
+      targetWidth = baseImage.width;
+      targetHeight = (baseImage.width * 3) ~/ 4;
+    }
+
+    // Crop the image around the center
+    int startX = (baseImage.width - targetWidth) ~/ 2;
+    int startY = (baseImage.height - targetHeight) ~/ 2;
+    img.Image croppedImage =
+        img.copyCrop(flippedImage, startX, startY, targetWidth, targetHeight);
 
     img.Image overlayImage;
     if (overlayPath.startsWith('http')) {
@@ -168,29 +199,21 @@ class _CameraScreenState extends State<CameraScreen> {
       overlayImage = img.decodeImage(File(overlayPath).readAsBytesSync())!;
     }
 
-    img.Image resizedFlippedImage = img.copyResize(
-      flippedImage,
-      width: 4 * baseHeight ~/ 3,
-      height: baseHeight,
-    );
-
     img.Image resizedOverlayImage = img.copyResize(
       overlayImage,
-      width: resizedFlippedImage.width,
-      height:
-          (resizedFlippedImage.width * overlayImage.height / overlayImage.width)
-              .round(),
+      width: croppedImage.width,
+      height: (croppedImage.width * overlayImage.height / overlayImage.width)
+          .round(),
     );
 
-    int offsetX = (resizedFlippedImage.width - resizedOverlayImage.width) ~/ 2;
-    int offsetY =
-        (resizedFlippedImage.height - resizedOverlayImage.height) ~/ 2;
-    img.copyInto(resizedFlippedImage, resizedOverlayImage,
+    int offsetX = (croppedImage.width - resizedOverlayImage.width) ~/ 2;
+    int offsetY = (croppedImage.height - resizedOverlayImage.height) ~/ 2;
+    img.copyInto(croppedImage, resizedOverlayImage,
         dstX: offsetX, dstY: offsetY);
 
     String newPath = '${file.parent.path}/merged_${DateTime.now()}.png';
     File newImageFile = File(newPath)
-      ..writeAsBytesSync(img.encodePng(resizedFlippedImage));
+      ..writeAsBytesSync(img.encodePng(croppedImage));
     print('New image saved at: $newPath');
     return newImageFile.path;
   }
@@ -204,10 +227,30 @@ class _CameraScreenState extends State<CameraScreen> {
       images.add(image);
     }
 
-    int width = images[0].width;
-    int height = images.fold(0, (prev, element) => prev + element.height);
+    //logo 이미지 코드
+    ByteData logoData = await rootBundle.load('assets/logo.png');
+    img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
+    // 배경이 흰색인 경우 검정색으로 변환
+    if (backgroundColor == Colors.white) {
+      for (int y = 0; y < logoImage.height; y++) {
+        for (int x = 0; x < logoImage.width; x++) {
+          if (logoImage.getPixel(x, y) == img.getColor(255, 255, 255)) {
+            logoImage.setPixel(x, y, img.getColor(0, 0, 0));
+          }
+        }
+      }
+    }
 
-    img.Image mergedFourImage = img.Image(width + 160, height + 300);
+    int imageWidth = images[0].width;
+    int imageHeight = images[0].height;
+
+    int gap = 20;
+
+    int width = (imageWidth * 2) +
+        (7 * gap); // Two images side by side with padding and gaps
+    int height = (imageHeight * 4) + (3 * gap) + logoImage.height + gap;
+
+    img.Image mergedFourImage = img.Image(width, height + 270);
 
     // Set background color
     img.fill(
@@ -215,11 +258,18 @@ class _CameraScreenState extends State<CameraScreen> {
         img.getColor(
             backgroundColor.red, backgroundColor.green, backgroundColor.blue));
 
-    int offsetY = 60;
+    int offsetY = 40;
     for (img.Image image in images) {
-      img.copyInto(mergedFourImage, image, dstX: 80, dstY: offsetY);
-      offsetY += (image.height + 60);
+      img.copyInto(mergedFourImage, image, dstX: gap * 2, dstY: offsetY);
+      offsetY += (image.height + 2 * gap);
     }
+    // SnapIT 이미지를 하단에 복사
+    img.copyInto(mergedFourImage, logoImage,
+        dstX: (mergedFourImage.width ~/ 2 - logoImage.width) ~/ 2,
+        dstY: offsetY + gap);
+
+    img.copyInto(mergedFourImage, mergedFourImage,
+        dstX: mergedFourImage.width ~/ 2, dstY: 0);
 
     Directory dic = await getApplicationDocumentsDirectory();
     String filename = '${dic.path}/merged_${DateTime.now()}.png';

@@ -1,4 +1,9 @@
 PODS:
+  - BSGridCollectionViewLayout (1.2.5)
+  - BSImagePicker (2.10.3):
+    - BSGridCollectionViewLayout (= 1.2.5)
+    - BSImageView (= 1.0.3)
+  - BSImageView (1.0.3)
   - camera_avfoundation (0.0.1):
     - Flutter
   - Flutter (1.0.0)
@@ -6,10 +11,19 @@ PODS:
     - Flutter
   - image_picker_ios (0.0.1):
     - Flutter
+  - local_rembg (0.0.5):
+    - Flutter
+  - multi_image_picker (4.8.00):
+    - BSImagePicker (~> 2.10.3)
+    - Flutter
   - path_provider_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
   - "permission_handler (5.1.0+2)":
+    - Flutter
+  - share_plus (0.0.1):
+    - Flutter
+  - social_share (0.0.1):
     - Flutter
 
 DEPENDENCIES:
@@ -17,8 +31,18 @@ DEPENDENCIES:
   - Flutter (from `Flutter`)
   - image_gallery_saver (from `.symlinks/plugins/image_gallery_saver/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
+  - local_rembg (from `.symlinks/plugins/local_rembg/ios`)
+  - multi_image_picker (from `.symlinks/plugins/multi_image_picker/ios`)
   - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
+  - share_plus (from `.symlinks/plugins/share_plus/ios`)
+  - social_share (from `.symlinks/plugins/social_share/ios`)
+
+SPEC REPOS:
+  trunk:
+    - BSGridCollectionViewLayout
+    - BSImagePicker
+    - BSImageView
 
 EXTERNAL SOURCES:
   camera_avfoundation:
@@ -29,19 +53,34 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/image_gallery_saver/ios"
   image_picker_ios:
     :path: ".symlinks/plugins/image_picker_ios/ios"
+  local_rembg:
+    :path: ".symlinks/plugins/local_rembg/ios"
+  multi_image_picker:
+    :path: ".symlinks/plugins/multi_image_picker/ios"
   path_provider_foundation:
     :path: ".symlinks/plugins/path_provider_foundation/darwin"
   permission_handler:
     :path: ".symlinks/plugins/permission_handler/ios"
+  share_plus:
+    :path: ".symlinks/plugins/share_plus/ios"
+  social_share:
+    :path: ".symlinks/plugins/social_share/ios"
 
 SPEC CHECKSUMS:
+  BSGridCollectionViewLayout: 333dcb457a5a3bdd9212607ab5756553dcfe06cb
+  BSImagePicker: 07404254f2fcdaf5a2eb403c0f8c337267ce8738
+  BSImageView: a149459433a2687157d034c78e059d30ac7f2544
   camera_avfoundation: 759172d1a77ae7be0de08fc104cfb79738b8a59e
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   image_gallery_saver: 259eab68fb271cfd57d599904f7acdc7832e7ef2
   image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
+  local_rembg: c8472adbe967b6f550fddd6241c738c0a4783211
+  multi_image_picker: 443e776a762d7901641854043b60abf88a85d5ef
   path_provider_foundation: 2b6b4c569c0fb62ec74538f866245ac84301af46
   permission_handler: ccb20a9fad0ee9b1314a52b70b76b473c5f8dab0
+  share_plus: 056a1e8ac890df3e33cb503afffaf1e9b4fbae68
+  social_share: 702a5e3842addd22db515aa9e1e00a4b80a0296d
 
-PODFILE CHECKSUM: 819463e6a0290f5a72f145ba7cde16e8b6ef0796
+PODFILE CHECKSUM: f393a3e970b6bcad3ccd24fdc079653b90c459b1
 
 COCOAPODS: 1.15.2
