@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:image/image.dart' as img;
 
-Future<img.Image> cropAndResizeImage(File imageFile, double aspectRatio) async {
+Future<img.Image> cropImage(File imageFile, double aspectRatio) async {
   // 이미지 파일을 로드
   List<int> imageBytes = await imageFile.readAsBytes();
   img.Image originalImage = img.decodeImage(imageBytes)!;
