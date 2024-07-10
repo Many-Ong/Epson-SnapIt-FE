@@ -4,21 +4,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:share_plus/share_plus.dart'; // Import the share_plus package
-import 'package:path_provider/path_provider.dart'; // Import the path_provider package
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:snapit/screens/home_screen.dart';
 import 'package:social_share/social_share.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:image/image.dart' as img;
-import 'package:flutter/material.dart'
-    hide Image; // Avoiding conflict with image package
+import 'package:flutter/material.dart' hide Image;
 
 class DisplayPictureScreen extends StatefulWidget {
-  final List<String> takenPictures;
+  final img.Image mergedFourImage;
+  final img.Image logoImage;
   final String appId;
 
   DisplayPictureScreen({
-    required this.takenPictures,
+    required this.mergedFourImage,
+    required this.logoImage,
     required BuildContext context,
   }) : appId = dotenv.env['APP_ID']!;
 
@@ -27,18 +28,71 @@ class DisplayPictureScreen extends StatefulWidget {
 }
 
 class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
-  late Color selectedFrameColor;
-  late img.Image displayedImage;
-  late String imageFilePath;
+  Color selectedFrameColor = Colors.white;
+  late img.Image coloredImage;
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    selectedFrameColor = Colors.white;
-    mergeImages(widget.takenPictures, selectedFrameColor);
+    applyFrameColor(selectedFrameColor);
+  }
+
+  void applyFrameColor(Color color) async {
+    setState(() {
+      selectedFrameColor = color;
+      isLoading = true;
+    });
+
+    await Future.delayed(Duration(milliseconds: 50)); // Ensure UI updates
+
+    coloredImage =
+        img.Image(widget.mergedFourImage.width, widget.mergedFourImage.height);
+
+    img.fill(coloredImage, img.getColor(color.red, color.green, color.blue));
+
+    img.copyInto(coloredImage, widget.mergedFourImage, dstX: 0, dstY: 0);
+
+    img.Image logoToApply =
+        color == Colors.black ? _invertLogo() : widget.logoImage;
+    img.copyInto(coloredImage, logoToApply,
+        dstX: (coloredImage.width ~/ 2 - logoToApply.width) ~/ 2,
+        dstY: coloredImage.height - logoToApply.height - 120);
+
+    img.copyInto(coloredImage, logoToApply,
+        dstX: coloredImage.width -
+            ((coloredImage.width ~/ 2 + logoToApply.width) ~/ 2),
+        dstY: coloredImage.height - logoToApply.height - 120);
+
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  img.Image _invertLogo() {
+    img.Image invertedLogo = img.copyResize(widget.logoImage,
+        width: widget.logoImage.width, height: widget.logoImage.height);
+    for (int y = 0; y < invertedLogo.height; y++) {
+      for (int x = 0; x < invertedLogo.width; x++) {
+        if (invertedLogo.getPixel(x, y) == img.getColor(0, 0, 0)) {
+          invertedLogo.setPixel(x, y, img.getColor(255, 255, 255));
+        }
+      }
+    }
+    return invertedLogo;
+  }
+
+  Future<String> createImageFile(img.Image displayedImage) async {
+    final tempDir = await getTemporaryDirectory();
+    final tempFile = await File('${tempDir.path}/temp_image.png').create();
+    await tempFile.writeAsBytes(img.encodePng(displayedImage));
+
+    return tempFile.path;
   }
 
   Future<void> saveImageToGallery() async {
+    String imageFilePath = await createImageFile(coloredImage);
+
     final result = await Permission.storage.request();
     if (result.isGranted) {
       final File imageFile = File(imageFilePath);
@@ -51,6 +105,8 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   }
 
   Future<void> shareImageToInstagramStory() async {
+    String imageFilePath = await createImageFile(coloredImage);
+
     await SocialShare.shareInstagramStory(
       appId: widget.appId,
       imagePath: imageFilePath,
@@ -60,6 +116,8 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   }
 
   Future<void> shareImage() async {
+    String imageFilePath = await createImageFile(coloredImage);
+
     File imageFile = File(imageFilePath);
     final Uint8List imageBytes = imageFile.readAsBytesSync();
 
@@ -73,81 +131,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
         sharePositionOrigin: Rect.fromLTWH(0, 0, 1, 1),
         subject: widget.appId,
         text: 'SnapIT!');
-  }
-
-  void applyFrameColor(Color color) {
-    mergeImages(widget.takenPictures, color);
-    setState(() {
-      selectedFrameColor = color;
-    });
-  }
-
-  Future<void> mergeImages(
-      List<String> imagePaths, Color backgroundColor) async {
-    List<img.Image> images = [];
-
-    for (String path in imagePaths) {
-      img.Image image = img.decodeImage(File(path).readAsBytesSync())!;
-      images.add(image);
-    }
-
-    ByteData logoData = await rootBundle.load('assets/logo_black.png');
-    img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
-    if (backgroundColor == Colors.black) {
-      for (int y = 0; y < logoImage.height; y++) {
-        for (int x = 0; x < logoImage.width; x++) {
-          if (logoImage.getPixel(x, y) == img.getColor(0, 0, 0)) {
-            logoImage.setPixel(x, y, img.getColor(255, 255, 255));
-          }
-        }
-      }
-    }
-
-    int imageWidth = images[0].width;
-    int imageHeight = images[0].height;
-
-    int gap = 35;
-
-    int width = (imageWidth * 2) + (7 * gap);
-    int height = (imageHeight * 4) + (3 * gap) + logoImage.height + gap;
-
-    img.Image mergedImage = img.Image(width, height + 360);
-
-    img.fill(
-        mergedImage,
-        img.getColor(
-            backgroundColor.red, backgroundColor.green, backgroundColor.blue));
-
-    int offsetY = 60;
-    for (img.Image image in images) {
-      img.copyInto(mergedImage, image, dstX: gap * 2, dstY: offsetY);
-      offsetY += (image.height + 2 * gap);
-    }
-
-    img.copyInto(mergedImage, logoImage,
-        dstX: (mergedImage.width ~/ 2 - logoImage.width) ~/ 2,
-        dstY: offsetY + gap);
-
-    img.copyInto(mergedImage, mergedImage,
-        dstX: mergedImage.width ~/ 2, dstY: 0);
-
-    setState(() {
-      displayedImage = mergedImage;
-    });
-
-    createImageFile(mergedImage);
-  }
-
-  Future<String> createImageFile(img.Image displayedImage) async {
-    final tempDir = await getTemporaryDirectory();
-    final tempFile = await File('${tempDir.path}/temp_image.png').create();
-    await tempFile.writeAsBytes(img.encodePng(displayedImage));
-
-    setState(() {
-      imageFilePath = tempFile.path;
-    });
-
-    return tempFile.path;
   }
 
   @override
@@ -170,11 +153,17 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     ];
 
     return Scaffold(
+      backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        automaticallyImplyLeading: false, // Removes the default back button
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: Icon(Icons.close),
+            icon: Icon(
+              Icons.close,
+              color: Colors.white,
+              size: 28,
+            ),
             onPressed: () {
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
@@ -193,11 +182,15 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             Flexible(
               flex: 3,
               child: Center(
-                child: displayedImage != null
-                    ? Image.memory(
-                        Uint8List.fromList(img.encodePng(displayedImage)),
-                        fit: BoxFit.cover)
-                    : CircularProgressIndicator(),
+                child: isLoading
+                    ? Text('Loading...',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontFamily: 'Roboto'))
+                    : Image.memory(
+                        Uint8List.fromList(img.encodePng(coloredImage)),
+                        fit: BoxFit.cover),
               ),
             ),
             SizedBox(height: 20),
@@ -219,7 +212,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: selectedFrameColor == color
-                              ? Colors.black
+                              ? Colors.grey[900]!
                               : Colors.transparent,
                           width: 4,
                         ),
@@ -245,9 +238,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             ),
             child: FloatingActionButton(
               backgroundColor: Colors.transparent,
-              onPressed: () async {
-                await saveImageToGallery();
-              },
+              onPressed: saveImageToGallery,
               child: Icon(
                 Icons.download,
                 color: Colors.white,
@@ -263,9 +254,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             ),
             child: FloatingActionButton(
               backgroundColor: Colors.transparent,
-              onPressed: () async {
-                await shareImageToInstagramStory();
-              },
+              onPressed: shareImageToInstagramStory,
               child: Image.asset(
                 'assets/instagram_icon_bw.png',
                 width: 28,
@@ -281,9 +270,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             ),
             child: FloatingActionButton(
               backgroundColor: Colors.transparent,
-              onPressed: () async {
-                await shareImage();
-              },
+              onPressed: shareImage,
               child: Icon(
                 Icons.share,
                 color: Colors.white,
