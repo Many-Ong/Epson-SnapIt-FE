@@ -270,11 +270,18 @@ class _CameraScreenState extends State<CameraScreen> {
 
     img.Image mergedFourImage = img.Image(width, height + 360);
 
-    int offsetY = 60;
+    int offsetY = 40;
     for (img.Image image in images) {
       img.copyInto(mergedFourImage, image, dstX: gap * 2, dstY: offsetY);
       offsetY += (image.height + 2 * gap);
     }
+    // SnapIT 이미지를 하단에 복사
+    img.copyInto(mergedFourImage, logoImage,
+        dstX: (mergedFourImage.width ~/ 2 - logoImage.width) ~/ 2,
+        dstY: offsetY + gap);
+
+    img.copyInto(mergedFourImage, mergedFourImage,
+        dstX: mergedFourImage.width ~/ 2, dstY: 0);
 
     img.copyInto(mergedFourImage, mergedFourImage,
         dstX: mergedFourImage.width ~/ 2, dstY: 0);

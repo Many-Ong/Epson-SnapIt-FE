@@ -82,6 +82,7 @@ class AISelectionScreen extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => RemoveBackGroundScreen(),
+
                             ),
                           );
                         },

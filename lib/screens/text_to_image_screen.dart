@@ -144,7 +144,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
       ),
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: Column(
+        child: Column( 
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Padding(
