@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:snapit/screens/camera_screen.dart';
 import 'package:snapit/screens/deepai_api_service.dart';
-import 'frame_selection_screen.dart';
 //테스트용 파일 추가
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
@@ -91,7 +91,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FrameSelectionScreen(
+        builder: (context) => CameraScreen(
           overlayImages: generatedImageUrls,
         ),
       ),
@@ -179,7 +179,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => FrameSelectionScreen(
+                              builder: (context) => CameraScreen(
                                     overlayImages: generatedImageUrls,
                                   )),
                         );
