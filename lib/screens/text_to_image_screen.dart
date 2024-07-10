@@ -1,18 +1,17 @@
 import 'dart:math';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
+import 'package:snapit/screens/camera_screen.dart';
 import 'package:snapit/screens/deepai_api_service.dart';
-import 'frame_selection_screen.dart';
 //테스트용 파일 추가
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
 class TextToImageScreen extends StatefulWidget {
-  final CameraDescription camera;
-
-  TextToImageScreen({super.key, required this.camera});
+  TextToImageScreen({
+    super.key,
+  });
 
   @override
   _TextToImageScreenState createState() => _TextToImageScreenState();
@@ -80,10 +79,11 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
 
     print('Generated image URLs: $generatedImageUrls');
 
-
-    if (generatedImageUrls.length != 4) { // Add random images to fill the list
-      while(generatedImageUrls.length < 4) {
-        String tmpImageUrls = generatedImageUrls[random.nextInt(generatedImageUrls.length)];
+    if (generatedImageUrls.length != 4) {
+      // Add random images to fill the list
+      while (generatedImageUrls.length < 4) {
+        String tmpImageUrls =
+            generatedImageUrls[random.nextInt(generatedImageUrls.length)];
         generatedImageUrls.add(tmpImageUrls);
       }
     }
@@ -91,8 +91,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FrameSelectionScreen(
-          camera: widget.camera,
+        builder: (context) => CameraScreen(
           overlayImages: generatedImageUrls,
         ),
       ),
@@ -104,9 +103,8 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
     final directory = await getApplicationDocumentsDirectory();
     final filePath = '${directory.path}/${assetPath.split('/').last}';
     final file = File(filePath);
-    await file.writeAsBytes(
-      byteData.buffer.asUint8List(byteData.offsetInBytes, byteData.lengthInBytes)
-    );
+    await file.writeAsBytes(byteData.buffer
+        .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
     return file;
   }
 
@@ -144,6 +142,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
       appBar: AppBar(
         title: const Text('Generate Images with Text'),
       ),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Column( 
           mainAxisAlignment: MainAxisAlignment.center,
@@ -180,10 +179,10 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
                       if (success) {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => FrameSelectionScreen(
-                              camera: widget.camera,
-                              overlayImages: generatedImageUrls,
-                          )),
+                          MaterialPageRoute(
+                              builder: (context) => CameraScreen(
+                                    overlayImages: generatedImageUrls,
+                                  )),
                         );
                       }
                     },

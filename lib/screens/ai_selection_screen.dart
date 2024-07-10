@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
 import 'package:snapit/screens/remove_bg_screen.dart';
 import 'text_to_image_screen.dart';
 import 'change_style_of_uploaded_image_screen.dart';
 
 class AISelectionScreen extends StatelessWidget {
-  final CameraDescription camera;
-
-  AISelectionScreen({required this.camera});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
         title: const Text('Choose Option'),
+        backgroundColor: Colors.black,
       ),
       body: SafeArea(
         child: Center(
@@ -31,8 +28,7 @@ class AISelectionScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  TextToImageScreen(camera: camera),
+                              builder: (context) => TextToImageScreen(),
                             ),
                           );
                         },
@@ -59,8 +55,7 @@ class AISelectionScreen extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  ChangeStyleOfUploadedImageScreen(
-                                      camera: camera),
+                                  ChangeStyleOfUploadedImageScreen(),
                             ),
                           );
                         },
@@ -78,7 +73,7 @@ class AISelectionScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Expanded( 
+                  Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
@@ -86,9 +81,8 @@ class AISelectionScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  RemoveBackGroundScreen(
-                                      camera: camera),
+                              builder: (context) => RemoveBackGroundScreen(),
+
                             ),
                           );
                         },
@@ -102,7 +96,8 @@ class AISelectionScreen extends StatelessWidget {
                                 16), // Reduced border radius
                           ),
                         ),
-                        child: const Text('Upload Your Images and Make Own Frame'),
+                        child:
+                            const Text('Upload Your Images and Make Own Frame'),
                       ),
                     ),
                   ),

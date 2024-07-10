@@ -1,16 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
+import 'package:snapit/screens/camera_screen.dart';
 import 'package:snapit/screens/deepai_api_service.dart';
 import 'dart:convert';
-import 'frame_selection_screen.dart';
 import 'dart:math';
 import '../utils/image_picker_util.dart';
 
 class ChangeStyleOfUploadedImageScreen extends StatefulWidget {
-  final CameraDescription camera;
-
-  ChangeStyleOfUploadedImageScreen({required this.camera});
+  ChangeStyleOfUploadedImageScreen();
 
   @override
   _ChangeStyleOfUploadedImageScreenState createState() =>
@@ -76,8 +73,7 @@ class _ChangeStyleOfUploadedImageScreenState
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FrameSelectionScreen(
-          camera: widget.camera,
+        builder: (context) => CameraScreen(
           overlayImages: processedImageUrls,
         ),
       ),
@@ -90,6 +86,7 @@ class _ChangeStyleOfUploadedImageScreenState
       appBar: AppBar(
         title: Text('Upload and Style Images'),
       ),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [

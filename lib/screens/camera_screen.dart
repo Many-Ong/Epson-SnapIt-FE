@@ -10,14 +10,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 
 class CameraScreen extends StatefulWidget {
-  final CameraDescription camera;
-  final Color frameColor;
   final List<String> overlayImages;
 
   const CameraScreen({
     super.key,
-    required this.camera,
-    required this.frameColor,
     required this.overlayImages,
   });
 
@@ -30,7 +26,7 @@ class _CameraScreenState extends State<CameraScreen> {
   late Future<void> _initializeControllerFuture;
   List<CameraDescription> cameras = [];
   int pictureCount = 0;
-  List<String> takePictures = [];
+  List<String> takenPictures = [];
   int overlayIndex = 0; // New variable to keep track of the overlay image index
 
   @override
@@ -45,7 +41,7 @@ class _CameraScreenState extends State<CameraScreen> {
       (camera) => camera.lensDirection == CameraLensDirection.front,
       orElse: () => cameras.first,
     );
-    _controller = CameraController(frontCamera, ResolutionPreset.medium);
+    _controller = CameraController(frontCamera, ResolutionPreset.veryHigh);
     // Ensure that the camera is initialized
     _initializeControllerFuture = _controller.initialize().then((_) async {
       if (!mounted) return;
@@ -74,7 +70,10 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Camera')),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+      ),
+      backgroundColor: Colors.black,
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
@@ -83,7 +82,7 @@ class _CameraScreenState extends State<CameraScreen> {
               children: <Widget>[
                 Center(
                   child: AspectRatio(
-                    aspectRatio: 4 / 3, // 부모 위젯의 비율을 1:1로 유지
+                    aspectRatio: 4 / 3,
                     child: ClipRect(
                       child: OverflowBox(
                         alignment: Alignment.center,
@@ -114,49 +113,77 @@ class _CameraScreenState extends State<CameraScreen> {
                           ),
                   ),
                 ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    child: Container(
+                      padding:
+                          EdgeInsets.all(4), // Add padding inside the container
+                      width: 70, // Set the size to match the iOS camera button
+                      height: 70,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white,
+                          width:
+                              2, // Set the border width to match iOS camera button
+                        ),
+                      ),
+                      child: FloatingActionButton(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(45),
+                        ),
+                        onPressed: () async {
+                          try {
+                            await _initializeControllerFuture; // Ensure the future is complete before proceeding
+                            if (pictureCount < 4) {
+                              final XFile image =
+                                  await _controller.takePicture();
+                              String overlayImagePath = await mergeImage(
+                                  image, widget.overlayImages[overlayIndex]);
+                              takenPictures.add(overlayImagePath);
+                              changeOverlayImage();
+                              pictureCount++;
+
+                              img.Image logoImage = img.decodeImage(
+                                  (await rootBundle
+                                          .load('assets/logo_black.png'))
+                                      .buffer
+                                      .asUint8List())!;
+
+                              img.Image mergedFourImage =
+                                  await mergeFourImages();
+
+                              if (pictureCount == 4) {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => DisplayPictureScreen(
+                                      mergedFourImage: mergedFourImage,
+                                      logoImage: logoImage,
+                                      context: context,
+                                    ),
+                                  ),
+                                );
+                                pictureCount = 0;
+                                takenPictures.clear();
+                              }
+                            }
+                          } catch (e) {
+                            print(e);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ),
               ],
             );
           } else {
             return const Center(child: CircularProgressIndicator());
           }
         },
-      ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            backgroundColor: Colors.white,
-            onPressed: () async {
-              try {
-                await _initializeControllerFuture; // Ensure the future is complete before proceeding
-                if (pictureCount < 4) {
-                  final XFile image = await _controller.takePicture();
-                  String overlayImagePath = await mergeImage(
-                      image, widget.overlayImages[overlayIndex]);
-                  takePictures.add(overlayImagePath);
-                  changeOverlayImage();
-                  pictureCount++;
-
-                  if (pictureCount == 4) {
-                    String mergedImagePath =
-                        await mergeFourImages(takePictures, widget.frameColor);
-                    await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => DisplayPictureScreen(
-                            imagePath: mergedImagePath, context: context),
-                      ),
-                    );
-                    pictureCount = 0;
-                    takePictures.clear();
-                  }
-                }
-              } catch (e) {
-                print(e);
-              }
-            },
-            child: const Icon(Icons.camera_alt, color: Colors.black),
-          ),
-        ],
       ),
     );
   }
@@ -218,45 +245,30 @@ class _CameraScreenState extends State<CameraScreen> {
     return newImageFile.path;
   }
 
-  Future<String> mergeFourImages(
-      List<String> imagePaths, Color backgroundColor) async {
+  Future<img.Image> mergeFourImages() async {
     List<img.Image> images = [];
-
-    for (String path in imagePaths) {
+    for (String path in takenPictures) {
       img.Image image = img.decodeImage(File(path).readAsBytesSync())!;
       images.add(image);
     }
 
-    //logo 이미지 코드
-    ByteData logoData = await rootBundle.load('assets/logo.png');
+    ByteData logoData = await rootBundle.load('assets/logo_black.png');
     img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
-    // 배경이 흰색인 경우 검정색으로 변환
-    if (backgroundColor == Colors.white) {
-      for (int y = 0; y < logoImage.height; y++) {
-        for (int x = 0; x < logoImage.width; x++) {
-          if (logoImage.getPixel(x, y) == img.getColor(255, 255, 255)) {
-            logoImage.setPixel(x, y, img.getColor(0, 0, 0));
-          }
-        }
-      }
-    }
 
     int imageWidth = images[0].width;
     int imageHeight = images[0].height;
+    int gap = 35;
 
-    int gap = 20;
+    print('imageWidth: $imageWidth');
+    print('imageHeight: $imageHeight');
 
-    int width = (imageWidth * 2) +
-        (7 * gap); // Two images side by side with padding and gaps
+    int width = (imageWidth * 2) + (7 * gap);
     int height = (imageHeight * 4) + (3 * gap) + logoImage.height + gap;
 
-    img.Image mergedFourImage = img.Image(width, height + 270);
+    print('logoImage width: ${logoImage.width}');
+    print('logoImage height: ${logoImage.height}');
 
-    // Set background color
-    img.fill(
-        mergedFourImage,
-        img.getColor(
-            backgroundColor.red, backgroundColor.green, backgroundColor.blue));
+    img.Image mergedFourImage = img.Image(width, height + 360);
 
     int offsetY = 40;
     for (img.Image image in images) {
@@ -271,9 +283,9 @@ class _CameraScreenState extends State<CameraScreen> {
     img.copyInto(mergedFourImage, mergedFourImage,
         dstX: mergedFourImage.width ~/ 2, dstY: 0);
 
-    Directory dic = await getApplicationDocumentsDirectory();
-    String filename = '${dic.path}/merged_${DateTime.now()}.png';
-    File(filename).writeAsBytesSync(img.encodePng(mergedFourImage));
-    return filename;
+    img.copyInto(mergedFourImage, mergedFourImage,
+        dstX: mergedFourImage.width ~/ 2, dstY: 0);
+
+    return mergedFourImage;
   }
 }

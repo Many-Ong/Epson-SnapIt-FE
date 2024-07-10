@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
 import 'camera_screen.dart';
 
 class FrameSelectionScreen extends StatefulWidget {
-  final CameraDescription camera;
   final List<String> overlayImages;
 
-  FrameSelectionScreen(
-      {super.key, required this.camera, required this.overlayImages});
+  FrameSelectionScreen({super.key, required this.overlayImages});
 
   @override
   _FrameSelectionScreenState createState() => _FrameSelectionScreenState();
@@ -15,23 +12,23 @@ class FrameSelectionScreen extends StatefulWidget {
 
 class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
   final List<Color> frameColors = [
-    Colors.red,
-    Colors.pink,
-    Colors.purple,
-    Colors.lightBlue,
-    Colors.blue,
-    Colors.yellow,
-    Colors.orange,
-    Colors.blue.shade400,
-    Colors.green.shade200,
-    Colors.teal,
-    Colors.brown,
-    Colors.grey,
+    Color.fromARGB(255, 255, 200, 221),
+    Color.fromARGB(255, 255, 175, 204),
+    Color.fromARGB(255, 255, 173, 173),
+    Color.fromARGB(255, 255, 214, 165),
+    Color.fromARGB(255, 253, 255, 182),
+    Color.fromARGB(255, 202, 255, 191),
+    Color.fromARGB(255, 189, 224, 254),
+    Color.fromARGB(255, 162, 210, 255),
+    Color.fromARGB(255, 160, 196, 255),
+    Color.fromARGB(255, 189, 178, 255),
+    Color.fromARGB(255, 205, 180, 219),
+    Color.fromARGB(255, 192, 192, 192),
     Colors.black,
     Colors.white,
   ];
 
-  Color selectedFrameColor = Colors.blue; // Default color
+  Color selectedFrameColor = Colors.white;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +42,7 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
           children: [
             Text(
               'Choose your favorite Frame',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(fontSize: 16, color: Colors.white),
             ),
             SizedBox(height: 10),
             Center(
@@ -93,8 +90,6 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => CameraScreen(
-                        camera: widget.camera,
-                        frameColor: selectedFrameColor,
                         overlayImages: widget.overlayImages,
                       ),
                     ),

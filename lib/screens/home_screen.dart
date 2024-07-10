@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
 import '../services/api_service.dart';
 import 'ai_selection_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  final CameraDescription? camera;
   final bool camerasAvailable;
   final ApiService apiService = ApiService('http://15.165.196.28');
 
-  HomeScreen({super.key, required this.camera, required this.camerasAvailable});
+  HomeScreen({super.key, required this.camerasAvailable});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +24,7 @@ class HomeScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         const Spacer(),
-        Image.asset('assets/logo.png', width: 300), // Display the logo image
+        Image.asset('assets/logo.png'),
         const Spacer(),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 60),
@@ -34,8 +32,7 @@ class HomeScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => AISelectionScreen(camera: camera!)),
+                MaterialPageRoute(builder: (context) => AISelectionScreen()),
               );
             },
             style: ElevatedButton.styleFrom(
