@@ -70,7 +70,10 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+      ),
+      backgroundColor: Colors.black,
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
         builder: (context, snapshot) {
@@ -144,11 +147,21 @@ class _CameraScreenState extends State<CameraScreen> {
                               changeOverlayImage();
                               pictureCount++;
 
+                              img.Image logoImage = img.decodeImage(
+                                  (await rootBundle
+                                          .load('assets/logo_black.png'))
+                                      .buffer
+                                      .asUint8List())!;
+
+                              img.Image mergedFourImage =
+                                  await mergeFourImages();
+
                               if (pictureCount == 4) {
                                 await Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) => DisplayPictureScreen(
-                                      takenPictures: takenPictures,
+                                      mergedFourImage: mergedFourImage,
+                                      logoImage: logoImage,
                                       context: context,
                                     ),
                                   ),
@@ -230,5 +243,42 @@ class _CameraScreenState extends State<CameraScreen> {
       ..writeAsBytesSync(img.encodePng(croppedImage));
     print('New image saved at: $newPath');
     return newImageFile.path;
+  }
+
+  Future<img.Image> mergeFourImages() async {
+    List<img.Image> images = [];
+    for (String path in takenPictures) {
+      img.Image image = img.decodeImage(File(path).readAsBytesSync())!;
+      images.add(image);
+    }
+
+    ByteData logoData = await rootBundle.load('assets/logo_black.png');
+    img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
+
+    int imageWidth = images[0].width;
+    int imageHeight = images[0].height;
+    int gap = 35;
+
+    print('imageWidth: $imageWidth');
+    print('imageHeight: $imageHeight');
+
+    int width = (imageWidth * 2) + (7 * gap);
+    int height = (imageHeight * 4) + (3 * gap) + logoImage.height + gap;
+
+    print('logoImage width: ${logoImage.width}');
+    print('logoImage height: ${logoImage.height}');
+
+    img.Image mergedFourImage = img.Image(width, height + 360);
+
+    int offsetY = 60;
+    for (img.Image image in images) {
+      img.copyInto(mergedFourImage, image, dstX: gap * 2, dstY: offsetY);
+      offsetY += (image.height + 2 * gap);
+    }
+
+    img.copyInto(mergedFourImage, mergedFourImage,
+        dstX: mergedFourImage.width ~/ 2, dstY: 0);
+
+    return mergedFourImage;
   }
 }

@@ -86,8 +86,9 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text('Upload and Style Images'),
+        backgroundColor: Colors.black,
       ),
       body: SafeArea(
         child: Column(
@@ -103,7 +104,7 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
             SizedBox(height: 10),
             Text(
               '${uploadedImages.length}/4 selected',
-              style: TextStyle(fontSize: 16),
+              style: TextStyle(fontSize: 16, color: Colors.white),
             ),
             SizedBox(height: 16),
             Expanded(
@@ -133,7 +134,9 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
               ),
             ),
             if (isLoading)
-              CircularProgressIndicator()
+              CircularProgressIndicator(
+                color: Colors.white,
+              )
             else
               ElevatedButton(
                 onPressed: uploadedImages.length == 4 && !isLoading
@@ -144,8 +147,12 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: Colors.black,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                 ),
-                child: Text('Process and Continue'),
+                child: Text('Process and Continue',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
               ),
           ],
         ),

@@ -142,6 +142,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
       appBar: AppBar(
         title: const Text('Generate Images with Text'),
       ),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
