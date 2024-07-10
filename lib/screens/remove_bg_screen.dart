@@ -68,7 +68,7 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
       isLoading = false;
     });
 
-    print('Generated image URLs: $processedImageUrls');
+    //print('Generated image URLs: $processedImageUrls');
 
     if (processedImageUrls.length >= 4) {
       Navigator.push(

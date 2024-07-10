@@ -34,7 +34,6 @@ class PrintScreen extends StatelessWidget {
         subjectId,
         jobId,
       );
-
       print('Print executed successfully: $executePrintResponse');
     } catch (e) {
       print('Error during print process: $e');
