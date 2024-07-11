@@ -86,6 +86,7 @@ class _ChangeStyleOfUploadedImageScreenState
       appBar: AppBar(
         title: Text('Upload and Style Images'),
       ),
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [
