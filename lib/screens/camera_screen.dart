@@ -191,14 +191,8 @@ class _CameraScreenState extends State<CameraScreen> {
       return '';
     }
 
-    img.Image? baseImage = img.decodeImage(file.readAsBytesSync());
-    img.Image flippedImage;
-    if (baseImage != null) {
-       flippedImage = img.flipHorizontal(baseImage);
-    } else {
-      print('Failed to decode image');
-      return '';
-    }
+    img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
+    img.Image flippedImage = img.flipHorizontal(baseImage);
 
     // Determine crop size for 4:3 ratio
     int targetWidth, targetHeight;
