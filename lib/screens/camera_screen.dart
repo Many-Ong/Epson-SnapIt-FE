@@ -107,34 +107,6 @@ class _CameraScreenState extends State<CameraScreen> {
                               ),
                       ),
                     ),
-                    Center(
-                      child: AspectRatio(
-                        aspectRatio: 4 / 3,
-                        child: ClipRect(
-                          child: Transform.scale(
-                            scale: _controller.value.aspectRatio / 3 * 4,
-                            child: Center(
-                              child: CameraPreview(
-                                _controller),
-                            )
-                          ),
-                          ),
-                        ),
-                    ),
-                    Center(
-                      child: AspectRatio(
-                        aspectRatio: 4 / 3,
-                        child: widget.overlayImages[overlayIndex].startsWith('http')
-                            ? flutter.Image.network(
-                                widget.overlayImages[overlayIndex],
-                                fit: BoxFit.cover, // 이미지가 프리뷰 화면을 덮도록 설정
-                              )
-                            : flutter.Image.file(
-                                File(widget.overlayImages[overlayIndex]),
-                                fit: BoxFit.cover, // 이미지가 프리뷰 화면을 덮도록 설정
-                              ),
-                      ),
-                    ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
@@ -219,8 +191,14 @@ class _CameraScreenState extends State<CameraScreen> {
       return '';
     }
 
-    img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
-    img.Image flippedImage = img.flipHorizontal(baseImage);
+    img.Image? baseImage = img.decodeImage(file.readAsBytesSync());
+    img.Image flippedImage;
+    if (baseImage != null) {
+       flippedImage = img.flipHorizontal(baseImage);
+    } else {
+      print('Failed to decode image');
+      return '';
+    }
 
     // Determine crop size for 4:3 ratio
     int targetWidth, targetHeight;
