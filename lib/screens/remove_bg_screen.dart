@@ -20,13 +20,21 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
   List<String> processedImageUrls = [];
   TextEditingController _textController = TextEditingController();
   bool isLoading = false;
+  bool isUploading = false;
   Uint8List? imageBytes;
   String? message;
 
   Future<void> _pickImages() async {
+    setState(() {
+      isUploading = true;
+    });
+
     uploadedImages =
         await ImagePickerUtil.pickImages(context, uploadedImages, 4);
-    setState(() {});
+
+    setState(() {
+      isUploading = false;
+    });
   }
 
   Future<String> _saveImageToFileSystem(Uint8List imageBytes) async {
@@ -151,30 +159,37 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
             ),
             SizedBox(height: 16),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2),
-                itemCount: uploadedImages.length,
-                itemBuilder: (context, index) {
-                  return Stack(
-                    children: [
-                      Image.file(uploadedImages[index]),
-                      Positioned(
-                        top: 0,
-                        right: 0,
-                        child: IconButton(
-                          icon: Icon(Icons.remove_circle, color: Colors.red),
-                          onPressed: () {
-                            setState(() {
-                              uploadedImages.removeAt(index);
-                            });
-                          },
-                        ),
+              child: isUploading
+                  ? Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
                       ),
-                    ],
-                  );
-                },
-              ),
+                    )
+                  : GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2),
+                      itemCount: uploadedImages.length,
+                      itemBuilder: (context, index) {
+                        return Stack(
+                          children: [
+                            Image.file(uploadedImages[index]),
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: IconButton(
+                                icon: Icon(Icons.remove_circle,
+                                    color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    uploadedImages.removeAt(index);
+                                  });
+                                },
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
             ),
             if (isLoading)
               CircularProgressIndicator(
