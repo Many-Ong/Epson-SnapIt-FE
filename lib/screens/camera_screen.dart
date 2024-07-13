@@ -69,9 +69,11 @@ class _CameraScreenState extends State<CameraScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
-        title: Text('${pictureCount + 1}/4'),
-      ),
+          backgroundColor: Colors.black,
+          title: Text(
+            '${pictureCount + 1}/4',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          )),
       backgroundColor: Colors.black,
       body: FutureBuilder<void>(
         future: _initializeControllerFuture,
@@ -80,6 +82,7 @@ class _CameraScreenState extends State<CameraScreen> {
             return Stack(
               children: <Widget>[
                 Center(
+                  heightFactor: 2,
                   child: AspectRatio(
                     aspectRatio: 4 / 3,
                     child: ClipRect(
@@ -93,6 +96,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 ),
                 if (!widget.isBasicFrame)
                   Center(
+                    heightFactor: 2,
                     child: AspectRatio(
                       aspectRatio: 4 / 3,
                       child:

@@ -137,25 +137,36 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.black,
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
               ),
-              child: Text('Upload Images'),
+              child: Text(
+                'Upload Images',
+                selectionColor: Colors.black,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
             ),
             SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Text(
-                'Select 4 portrait images to remove background. Only portrait images are supported.',
+                'Select 4 portrait images to remove background. \nOnly portrait images are supported.',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.white,
+                  fontWeight: FontWeight.w500,
                 ),
-                textAlign: TextAlign.start,
+                textAlign: TextAlign.center,
               ),
             ),
-            SizedBox(height: 10),
+            SizedBox(height: 52),
             Text(
               '${uploadedImages.length}/4 selected',
-              style: TextStyle(fontSize: 16, color: Colors.white),
+              style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700),
             ),
             SizedBox(height: 16),
             Expanded(
@@ -207,11 +218,17 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
                   foregroundColor: Colors.black,
                   padding:
                       const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(28), // Reduced border radius
+                  ),
                 ),
-                child: Text('Process and Continue',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                child: Text(
+                  'Continue',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
               ),
+            SizedBox(height: 20),
           ],
         ),
       ),
