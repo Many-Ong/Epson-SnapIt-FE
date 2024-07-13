@@ -45,7 +45,7 @@ class _CameraScreenState extends State<CameraScreen> {
     // Ensure that the camera is initialized
     _initializeControllerFuture = _controller.initialize().then((_) async {
       if (!mounted) return;
-      await _controller.setExposureMode(ExposureMode.auto); 
+      await _controller.setExposureMode(ExposureMode.auto);
       await _controller.setFlashMode(FlashMode.off);
       setState(() {});
     }).catchError((error) {
@@ -66,11 +66,12 @@ class _CameraScreenState extends State<CameraScreen> {
     });
   }
 
-   @override
-  Widget build(BuildContext context) { 
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,
+        title: Text('${overlayIndex + 1}/4'),
       ),
       backgroundColor: Colors.black,
       body: FutureBuilder<void>(
@@ -79,34 +80,32 @@ class _CameraScreenState extends State<CameraScreen> {
           if (snapshot.connectionState == ConnectionState.done) {
             return Stack(
               children: <Widget>[
-                    Center(
-                      child: AspectRatio(
-                        aspectRatio: 4 / 3,
-                        child: ClipRect(
-                          child: Transform.scale(
-                            scale: _controller.value.aspectRatio / 3 * 4,
-                            child: Center(
-                              child: CameraPreview(
-                                _controller),
-                            )
-                          ),
-                          ),
-                        ),
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: 4 / 3,
+                    child: ClipRect(
+                      child: Transform.scale(
+                          scale: _controller.value.aspectRatio / 3 * 4,
+                          child: Center(
+                            child: CameraPreview(_controller),
+                          )),
                     ),
-                    Center(
-                      child: AspectRatio(
-                        aspectRatio: 4 / 3,
-                        child: widget.overlayImages[overlayIndex].startsWith('http')
-                            ? flutter.Image.network(
-                                widget.overlayImages[overlayIndex],
-                                fit: BoxFit.cover, // 이미지가 프리뷰 화면을 덮도록 설정
-                              )
-                            : flutter.Image.file(
-                                File(widget.overlayImages[overlayIndex]),
-                                fit: BoxFit.cover, // 이미지가 프리뷰 화면을 덮도록 설정
-                              ),
-                      ),
-                    ),
+                  ),
+                ),
+                Center(
+                  child: AspectRatio(
+                    aspectRatio: 4 / 3,
+                    child: widget.overlayImages[overlayIndex].startsWith('http')
+                        ? flutter.Image.network(
+                            widget.overlayImages[overlayIndex],
+                            fit: BoxFit.cover, // 이미지가 프리뷰 화면을 덮도록 설정
+                          )
+                        : flutter.Image.file(
+                            File(widget.overlayImages[overlayIndex]),
+                            fit: BoxFit.cover, // 이미지가 프리뷰 화면을 덮도록 설정
+                          ),
+                  ),
+                ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
@@ -182,7 +181,6 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 
-
   Future<String> mergeImage(XFile picture, String overlayPath) async {
     File file = File(picture.path);
 
@@ -229,7 +227,8 @@ class _CameraScreenState extends State<CameraScreen> {
     );
 
     int offsetX = (croppedImage.width - resizedOverlayImage.width) ~/ 2;
-    int offsetY = (croppedImage.height - resizedOverlayImage.height) ~/ 2 + 50; //임의로 조정
+    int offsetY =
+        (croppedImage.height - resizedOverlayImage.height) ~/ 2 + 50; //임의로 조정
     img.copyInto(croppedImage, resizedOverlayImage,
         dstX: offsetX, dstY: offsetY);
 
