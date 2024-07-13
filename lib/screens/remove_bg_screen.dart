@@ -74,7 +74,8 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CameraScreen(overlayImages: processedImageUrls),
+          builder: (context) => CameraScreen(
+              overlayImages: processedImageUrls, isBasicFrame: false),
         ),
       );
     } else {

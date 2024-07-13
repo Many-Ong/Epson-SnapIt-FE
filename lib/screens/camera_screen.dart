@@ -1,6 +1,5 @@
 import 'dart:io';
-import 'package:flutter/material.dart'
-    hide Image; // Avoiding conflict with image package
+import 'package:flutter/material.dart' hide Image;
 import 'package:flutter/material.dart' as flutter;
 import 'package:camera/camera.dart';
 import 'package:flutter/services.dart';
@@ -11,10 +10,12 @@ import 'package:http/http.dart' as http;
 
 class CameraScreen extends StatefulWidget {
   final List<String> overlayImages;
+  final bool isBasicFrame;
 
   const CameraScreen({
     super.key,
     required this.overlayImages,
+    required this.isBasicFrame,
   });
 
   @override
@@ -27,7 +28,7 @@ class _CameraScreenState extends State<CameraScreen> {
   List<CameraDescription> cameras = [];
   int pictureCount = 0;
   List<String> takenPictures = [];
-  int overlayIndex = 0; // New variable to keep track of the overlay image index
+  int overlayIndex = 0;
 
   @override
   void initState() {
@@ -42,7 +43,6 @@ class _CameraScreenState extends State<CameraScreen> {
       orElse: () => cameras.first,
     );
     _controller = CameraController(frontCamera, ResolutionPreset.veryHigh);
-    // Ensure that the camera is initialized
     _initializeControllerFuture = _controller.initialize().then((_) async {
       if (!mounted) return;
       await _controller.setExposureMode(ExposureMode.auto);
@@ -59,7 +59,6 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
-  // Method to change the overlay image
   void changeOverlayImage() {
     setState(() {
       overlayIndex = (overlayIndex + 1) % widget.overlayImages.length;
@@ -71,7 +70,7 @@ class _CameraScreenState extends State<CameraScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: Text('${overlayIndex + 1}/4'),
+        title: Text('${pictureCount + 1}/4'),
       ),
       backgroundColor: Colors.black,
       body: FutureBuilder<void>(
@@ -92,35 +91,35 @@ class _CameraScreenState extends State<CameraScreen> {
                     ),
                   ),
                 ),
-                Center(
-                  child: AspectRatio(
-                    aspectRatio: 4 / 3,
-                    child: widget.overlayImages[overlayIndex].startsWith('http')
-                        ? flutter.Image.network(
-                            widget.overlayImages[overlayIndex],
-                            fit: BoxFit.cover, // 이미지가 프리뷰 화면을 덮도록 설정
-                          )
-                        : flutter.Image.file(
-                            File(widget.overlayImages[overlayIndex]),
-                            fit: BoxFit.cover, // 이미지가 프리뷰 화면을 덮도록 설정
-                          ),
+                if (!widget.isBasicFrame)
+                  Center(
+                    child: AspectRatio(
+                      aspectRatio: 4 / 3,
+                      child:
+                          widget.overlayImages[overlayIndex].startsWith('http')
+                              ? flutter.Image.network(
+                                  widget.overlayImages[overlayIndex],
+                                  fit: BoxFit.cover,
+                                )
+                              : flutter.Image.file(
+                                  File(widget.overlayImages[overlayIndex]),
+                                  fit: BoxFit.cover,
+                                ),
+                    ),
                   ),
-                ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 80),
                     child: Container(
-                      padding:
-                          EdgeInsets.all(4), // Add padding inside the container
-                      width: 70, // Set the size to match the iOS camera button
+                      padding: EdgeInsets.all(4),
+                      width: 70,
                       height: 70,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: Colors.white,
-                          width:
-                              2, // Set the border width to match iOS camera button
+                          width: 2,
                         ),
                       ),
                       child: FloatingActionButton(
@@ -130,15 +129,18 @@ class _CameraScreenState extends State<CameraScreen> {
                         ),
                         onPressed: () async {
                           try {
-                            await _initializeControllerFuture; // Ensure the future is complete before proceeding
+                            await _initializeControllerFuture;
                             if (pictureCount < 4) {
                               final XFile image =
                                   await _controller.takePicture();
-                              String overlayImagePath = await mergeImage(
-                                  image, widget.overlayImages[overlayIndex]);
+                              String overlayImagePath = widget.isBasicFrame
+                                  ? await cropAndSaveImage(image)
+                                  : await mergeImage(image,
+                                      widget.overlayImages[overlayIndex]);
                               takenPictures.add(overlayImagePath);
-                              changeOverlayImage();
-                              pictureCount++;
+                              if (!widget.isBasicFrame) changeOverlayImage();
+
+                              print('pictureCount $pictureCount');
 
                               img.Image logoImage = img.decodeImage(
                                   (await rootBundle
@@ -149,7 +151,11 @@ class _CameraScreenState extends State<CameraScreen> {
                               img.Image mergedFourImage =
                                   await mergeFourImages();
 
-                              if (pictureCount == 4) {
+                              if (pictureCount != 3) {
+                                setState(() {
+                                  pictureCount = pictureCount + 1;
+                                });
+                              } else {
                                 await Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) => DisplayPictureScreen(
@@ -181,6 +187,44 @@ class _CameraScreenState extends State<CameraScreen> {
     );
   }
 
+  Future<String> cropAndSaveImage(XFile picture) async {
+    File file = File(picture.path);
+
+    if (!file.existsSync()) {
+      print('File does not exist');
+      return '';
+    }
+
+    img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
+    img.Image croppedImage = cropImage(baseImage);
+
+    String newPath = '${file.parent.path}/cropped_${DateTime.now()}.png';
+    File newImageFile = File(newPath)
+      ..writeAsBytesSync(img.encodePng(croppedImage));
+    print('New image saved at: $newPath');
+    return newImageFile.path;
+  }
+
+  img.Image cropImage(img.Image baseImage) {
+    img.Image flippedImage = img.flipHorizontal(baseImage);
+
+    int targetWidth, targetHeight;
+    if (baseImage.width / baseImage.height > 4 / 3) {
+      targetHeight = baseImage.height;
+      targetWidth = (baseImage.height * 4) ~/ 3;
+    } else {
+      targetWidth = baseImage.width;
+      targetHeight = (baseImage.width * 3) ~/ 4;
+    }
+
+    int startX = (baseImage.width - targetWidth) ~/ 2;
+    int startY = (baseImage.height - targetHeight) ~/ 2;
+    img.Image croppedImage =
+        img.copyCrop(flippedImage, startX, startY, targetWidth, targetHeight);
+
+    return croppedImage;
+  }
+
   Future<String> mergeImage(XFile picture, String overlayPath) async {
     File file = File(picture.path);
 
@@ -190,25 +234,7 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
-    img.Image flippedImage = img.flipHorizontal(baseImage);
-
-    // Determine crop size for 4:3 ratio
-    int targetWidth, targetHeight;
-    if (baseImage.width / baseImage.height > 4 / 3) {
-      // Width is too wide for the height to fit a 4:3 ratio
-      targetHeight = baseImage.height;
-      targetWidth = (baseImage.height * 4) ~/ 3;
-    } else {
-      // Height is too high for the width to fit a 4:3 ratio
-      targetWidth = baseImage.width;
-      targetHeight = (baseImage.width * 3) ~/ 4;
-    }
-
-    // Crop the image around the center
-    int startX = (baseImage.width - targetWidth) ~/ 2;
-    int startY = (baseImage.height - targetHeight) ~/ 2;
-    img.Image croppedImage =
-        img.copyCrop(flippedImage, startX, startY, targetWidth, targetHeight);
+    img.Image croppedImage = cropImage(baseImage);
 
     img.Image overlayImage;
     if (overlayPath.startsWith('http')) {
@@ -227,8 +253,7 @@ class _CameraScreenState extends State<CameraScreen> {
     );
 
     int offsetX = (croppedImage.width - resizedOverlayImage.width) ~/ 2;
-    int offsetY =
-        (croppedImage.height - resizedOverlayImage.height) ~/ 2 + 50; //임의로 조정
+    int offsetY = (croppedImage.height - resizedOverlayImage.height) ~/ 2 + 50;
     img.copyInto(croppedImage, resizedOverlayImage,
         dstX: offsetX, dstY: offsetY);
 
