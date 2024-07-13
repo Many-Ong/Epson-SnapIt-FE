@@ -1,5 +1,3 @@
-// lib/screens/remove_bg_screen.dart
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -8,6 +6,7 @@ import 'package:snapit/screens/camera_screen.dart';
 import 'dart:math';
 import 'package:local_rembg/local_rembg.dart';
 import '../utils/image_picker_util.dart';
+import 'package:flutter/cupertino.dart';
 
 class RemoveBackGroundScreen extends StatefulWidget {
   RemoveBackGroundScreen();
@@ -61,14 +60,15 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
         }
       } catch (e) {
         print('Error processing image: $e');
+        // Show alert and clear uploaded images
+        _showAlertAndClearImages();
+        return; // Exit the function
       }
     }
 
     setState(() {
       isLoading = false;
     });
-
-    //print('Generated image URLs: $processedImageUrls');
 
     if (processedImageUrls.length >= 4) {
       Navigator.push(
@@ -81,7 +81,37 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
     } else {
       // Handle the error or inform the user
       print('Not enough images processed successfully.');
+      _showAlertAndClearImages();
     }
+  }
+
+  void _showAlertAndClearImages() {
+    setState(() {
+      isLoading = false;
+      uploadedImages.clear();
+    });
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CupertinoAlertDialog(
+          title: Text('Background removal failed'),
+          content: Text(
+              'Only portrait photos can have their background removed. Please select other images.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'OK',
+                style: TextStyle(color: Colors.blue),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -101,6 +131,18 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
                 foregroundColor: Colors.black,
               ),
               child: Text('Upload Images'),
+            ),
+            SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                'Select 4 portrait images to remove background. Only portrait images are supported.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.start,
+              ),
             ),
             SizedBox(height: 10),
             Text(
