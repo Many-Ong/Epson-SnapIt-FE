@@ -40,7 +40,7 @@ class HomeScreen extends StatelessWidget {
               "Choose Theme",
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 32,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -128,7 +128,9 @@ class HomeScreen extends StatelessWidget {
                       child: Text(
                         title,
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
                     ), // 제목
@@ -139,7 +141,9 @@ class HomeScreen extends StatelessWidget {
                       child: Text(
                         subtitle,
                         style: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.normal),
+                            fontSize: 12,
+                            fontWeight: FontWeight.normal,
+                            color: Colors.white),
                       ),
                     ), // 하위 텍스트
                   ),
