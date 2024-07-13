@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'ai_selection_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class StartScreen extends StatelessWidget {
   final bool camerasAvailable;
   final ApiService apiService = ApiService('http://15.165.196.28');
 
-  HomeScreen({super.key, required this.camerasAvailable});
+  StartScreen({super.key, required this.camerasAvailable});
 
   @override
   Widget build(BuildContext context) {
