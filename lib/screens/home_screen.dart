@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:snapit/screens/remove_bg_screen.dart';
 import '../services/api_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -49,6 +50,10 @@ class HomeScreen extends StatelessWidget {
                   "You can take a picture with simple, standard frame",
                   () {
                     print("Basic Button Pressed"); // 첫 번째 버튼의 액션
+                    Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) =>  RemoveBackGroundScreen()),
+                    );
                   },
                 ),
                 SizedBox(height: 20), // 버튼 사이의 간격
@@ -59,6 +64,10 @@ class HomeScreen extends StatelessWidget {
                   "You can upload a person’s picture as an overlay image and take a picture with them!",
                   () {
                     print("Upload & Overlay Button Pressed"); // 두 번째 버튼의 액션
+                    Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) =>  RemoveBackGroundScreen()),
+                    );
                   },
                 ),
               ],
