@@ -4,7 +4,7 @@ import '../services/api_service.dart';
 class HomeScreen extends StatelessWidget {
   final bool camerasAvailable;
   final ApiService apiService = ApiService('http://15.165.196.28');
-
+  
   HomeScreen({super.key, required this.camerasAvailable});
 
   @override
@@ -68,7 +68,7 @@ class HomeScreen extends StatelessWidget {
   }
 
 
-Widget largeButton(BuildContext context, String imagePath, String title, String subtitle, VoidCallback onPressed) {
+  Widget largeButton(BuildContext context, String imagePath, String title, String subtitle, VoidCallback onPressed) {
     return InkWell(
       onTap: onPressed,
       child: Container(
