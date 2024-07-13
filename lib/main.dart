@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         //기존 속성 유지하며 폰트만 추가
         textTheme: ThemeData.dark().textTheme.apply(
-              fontFamily: 'AvenirNext',
+              fontFamily:'Pretendard',
             ),
       ),
       home: HomeScreen(
