@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
+import 'image_crop.dart';
 
 class ImagePickerUtil {
   static Future<img.Image> cropAndResizeImage(File imageFile, double aspectRatio) async {
@@ -55,7 +56,8 @@ class ImagePickerUtil {
       // Apply cropping and resizing
       List<File> processedFiles = [];
       for (var file in imageFiles) {
-        img.Image croppedImage = await cropAndResizeImage(file, 4 / 3);
+        // img.Image croppedImage = await cropAndResizeImage(file, 4 / 3);
+        img.Image croppedImage = await cropImage(file, 4 / 3);
         File processedFile = File(file.path)..writeAsBytesSync(img.encodeJpg(croppedImage));
         processedFiles.add(processedFile);
       }
