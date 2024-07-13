@@ -1,0 +1,7 @@
+flutter_native_splash:
+  color: "#000000" # Background color of the splash screen
+  image: assets/splash.png # Path to the splash screen image
+  android: true # Enable splash screen for Android
+  ios: true # Enable splash screen for iOS
+  ios:
+    image_width: 400dp  # Adjust this value to make the image bigger

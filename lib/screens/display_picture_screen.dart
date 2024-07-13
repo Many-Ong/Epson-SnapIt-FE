@@ -11,6 +11,7 @@ import 'package:social_share/social_share.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/material.dart' hide Image;
+import 'package:flutter/cupertino.dart';
 
 class DisplayPictureScreen extends StatefulWidget {
   final img.Image mergedFourImage;
@@ -99,6 +100,17 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
       final Uint8List imageBytes = await imageFile.readAsBytes();
       final result = await ImageGallerySaver.saveImage(imageBytes);
       print('Image saved to gallery: $result');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Image Saved', style: TextStyle(color: Colors.black)),
+          backgroundColor: Colors.white,
+          behavior: SnackBarBehavior.floating,
+          margin: EdgeInsets.only(top: 10, left: 10, right: 10, bottom: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
     } else {
       print('Permission denied');
     }
@@ -133,6 +145,28 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
         text: 'SnapIT!');
   }
 
+  Future<bool> _onWillPop() async {
+    return (await showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: Text('Do you want to exit?'),
+            actions: <Widget>[
+              CupertinoDialogAction(
+                onPressed: () => Navigator.of(context).pop(false),
+                textStyle: TextStyle(color: Colors.blue),
+                child: Text('No'),
+              ),
+              CupertinoDialogAction(
+                onPressed: () => Navigator.of(context).pop(true),
+                textStyle: TextStyle(color: Colors.blue),
+                child: Text('Yes'),
+              ),
+            ],
+          ),
+        )) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<Color> frameColors = [
@@ -164,12 +198,17 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
               color: Colors.white,
               size: 28,
             ),
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                    builder: (context) => HomeScreen(camerasAvailable: true)),
-                (Route<dynamic> route) => false,
-              );
+            onPressed: () async {
+              bool exit = await _onWillPop();
+              if (exit) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (context) => HomeScreen(
+                            camerasAvailable: true,
+                          )),
+                  (Route<dynamic> route) => false,
+                );
+              }
             },
           ),
         ],
