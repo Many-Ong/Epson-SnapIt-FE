@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:snapit/screens/start_screen.dart';
+import 'package:snapit/screens/home_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
               fontFamily: 'AvenirNext',
             ),
       ),
-      home: StartScreen(
+      home: HomeScreen(
         camerasAvailable: camerasAvailable,
       ), // Set HomeScreen as the home screen
     );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:snapit/screens/home_screen.dart';
 import '../services/api_service.dart';
-import 'ai_selection_screen.dart';
 
 class StartScreen extends StatelessWidget {
   final bool camerasAvailable;
@@ -32,7 +32,7 @@ class StartScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AISelectionScreen()),
+                MaterialPageRoute(builder: (context) => HomeScreen()),
               );
             },
             style: ElevatedButton.styleFrom(
