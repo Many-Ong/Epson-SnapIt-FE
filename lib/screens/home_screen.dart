@@ -5,7 +5,7 @@ import '../services/api_service.dart';
 class HomeScreen extends StatelessWidget {
   final bool camerasAvailable;
   final ApiService apiService = ApiService('http://15.165.196.28');
-  
+
   HomeScreen({super.key, required this.camerasAvailable});
 
   @override
@@ -27,57 +27,59 @@ class HomeScreen extends StatelessWidget {
           child: Image.asset(
             'assets/logo.png',
             height: 40,
-            ),
+          ),
         ),
         backgroundColor: Colors.black,
       ),
       body: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  "Choose Theme",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 20),
-                largeButton(
-                  context,
-                  "assets/select_basic.png", // 첫 번째 버튼의 이미지
-                  "Basic Frame", // 첫 번째 버튼의 설명
-                  "You can take a picture with simple, standard frame",
-                  () {
-                    print("Basic Button Pressed"); // 첫 번째 버튼의 액션
-                    Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) =>  RemoveBackGroundScreen()),
-                    );
-                  },
-                ),
-                SizedBox(height: 20), // 버튼 사이의 간격
-                largeButton(
-                  context,
-                  "assets/select_overlay.png", // 두 번째 버튼의 이미지
-                  "Your Own Overlay Frame",
-                  "You can upload a person’s picture as an overlay image and take a picture with them!",
-                  () {
-                    print("Upload & Overlay Button Pressed"); // 두 번째 버튼의 액션
-                    Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) =>  RemoveBackGroundScreen()),
-                    );
-                  },
-                ),
-              ],
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            "Choose Theme",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 40,
+              fontWeight: FontWeight.bold,
             ),
+          ),
+          SizedBox(height: 20),
+          largeButton(
+            context,
+            "assets/select_basic.png", // 첫 번째 버튼의 이미지
+            "Basic Frame", // 첫 번째 버튼의 설명
+            "You can take a picture with simple, standard frame",
+            () {
+              print("Basic Button Pressed"); // 첫 번째 버튼의 액션
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => RemoveBackGroundScreen()),
+              );
+            },
+          ),
+          SizedBox(height: 20), // 버튼 사이의 간격
+          largeButton(
+            context,
+            "assets/select_overlay.png", // 두 번째 버튼의 이미지
+            "Your Own Overlay Frame",
+            "You can upload a person’s picture as an overlay image and take a picture with them!",
+            () {
+              print("Upload & Overlay Button Pressed"); // 두 번째 버튼의 액션
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => RemoveBackGroundScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       backgroundColor: Colors.black,
     );
   }
 
-
-  Widget largeButton(BuildContext context, String imagePath, String title, String subtitle, VoidCallback onPressed) {
+  Widget largeButton(BuildContext context, String imagePath, String title,
+      String subtitle, VoidCallback onPressed) {
     return InkWell(
       onTap: onPressed,
       child: Container(
@@ -85,7 +87,8 @@ class HomeScreen extends StatelessWidget {
         height: 150, // 컨테이너 높이 설정
         decoration: BoxDecoration(
           color: Colors.white, // 배경 색상
-          boxShadow: [ // 그림자 효과
+          boxShadow: [
+            // 그림자 효과
             BoxShadow(
               color: Colors.grey.withOpacity(0.5),
               spreadRadius: 5,
@@ -94,7 +97,8 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-        child: Row( // Row 위젯으로 두 개의 열 생성
+        child: Row(
+          // Row 위젯으로 두 개의 열 생성
           children: <Widget>[
             Expanded(
               flex: 1, // 이미지는 공간의 1/3을 차지
@@ -106,7 +110,9 @@ class HomeScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)), // 제목
+                  Text(title,
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)), // 제목
                   SizedBox(height: 10), // 제목과 하위 텍스트 사이 간격
                   Text(subtitle), // 하위 텍스트
                 ],
