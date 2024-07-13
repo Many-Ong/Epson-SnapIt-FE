@@ -1,8 +1,25 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class HomeScreen extends StatelessWidget {
+  final bool camerasAvailable;
+  final ApiService apiService = ApiService('http://15.165.196.28');
+  
+  HomeScreen({super.key, required this.camerasAvailable});
+
   @override
   Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child:
+            camerasAvailable ? _buildContent(context) : _buildNoCameraMessage(),
+      ),
+    );
+  }
+
+  @override
+  Widget _buildContent(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Center(
@@ -16,6 +33,15 @@ class HomeScreen extends StatelessWidget {
       body: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
+                Text(
+                  "Choose Theme",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 20),
                 largeButton(
                   context,
                   "assets/select_basic.png", // 첫 번째 버튼의 이미지
@@ -40,9 +66,9 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: Colors.black,
     );
   }
-}
 
-Widget largeButton(BuildContext context, String imagePath, String title, String subtitle, VoidCallback onPressed) {
+
+  Widget largeButton(BuildContext context, String imagePath, String title, String subtitle, VoidCallback onPressed) {
     return InkWell(
       onTap: onPressed,
       child: Container(
@@ -82,3 +108,18 @@ Widget largeButton(BuildContext context, String imagePath, String title, String 
       ),
     );
   }
+
+  Widget _buildNoCameraMessage() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: const [
+        Icon(Icons.camera_alt, size: 100, color: Colors.grey),
+        SizedBox(height: 20),
+        Text(
+          'No cameras available',
+          style: TextStyle(fontSize: 20, color: Colors.grey),
+        ),
+      ],
+    );
+  }
+}
