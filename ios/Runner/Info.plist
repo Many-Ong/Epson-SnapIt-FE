@@ -27,13 +27,11 @@
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
 		<key>NSCameraUsageDescription</key>
-		<string>Camera is required for taking photos</string>
-		<key>NSMicrophoneUsageDescription</key>
-		<string>Microphone is required for recording videos</string>
+		<string>Our app requires access to the camera to allow you to take photos. Your data will not be shared without your consent.</string>
 		<key>NSPhotoLibraryAddUsageDescription</key>
-		<string>Need permission to save photos to your library</string>
+		<string>Our app needs permission to save photos to your library so you can store and manage your captured moments. Your data will not be shared without your consent.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>Need permission to access your photo library</string>
+		<string>Our app needs access to your photo library to allow you to upload photos for creating portrait frames. Your data will not be shared without your consent.</string>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>UILaunchStoryboardName</key>
