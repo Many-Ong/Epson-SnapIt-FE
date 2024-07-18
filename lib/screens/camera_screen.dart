@@ -42,7 +42,8 @@ class _CameraScreenState extends State<CameraScreen> {
       (camera) => camera.lensDirection == CameraLensDirection.front,
       orElse: () => cameras.first,
     );
-    _controller = CameraController(frontCamera, ResolutionPreset.veryHigh);
+    _controller = CameraController(frontCamera, ResolutionPreset.veryHigh,
+        enableAudio: false);
     _initializeControllerFuture = _controller.initialize().then((_) async {
       if (!mounted) return;
       await _controller.setExposureMode(ExposureMode.auto);
