@@ -12,6 +12,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/material.dart' hide Image;
 import 'package:flutter/cupertino.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 
 class DisplayPictureScreen extends StatefulWidget {
   final img.Image mergedFourImage;
@@ -114,6 +116,48 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     } else {
       print('Permission denied');
     }
+  }
+
+  //인스타그램 앱 유무를 확인하고 인스타그램 스토리에 이미지를 공유하는 메서드
+  Future<void> checkAndShareImageToInstagramStory() async {
+    //인스타그램 URL 스킴
+    const instagramUrl = 'instagram://app';
+
+    //인스타그램이 설치되어 있는지 확인
+    if (await canLaunchUrlString(instagramUrl)) {
+      await shareImageToInstagramStory();
+    } else {
+      print('Instagram not installed');
+      showInstallInstagramDialog();
+    }
+  }
+
+  //인스타그램 설치 다이얼로그를 표시하는 메서드
+  void showInstallInstagramDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Instagram not installed'),
+          content: Text(
+              'Would you like to install Instagram to share to your story'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Install'),
+              onPressed: () {
+                launch('https://apps.apple.com/us/app/instagram/id389801252');
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> shareImageToInstagramStory() async {
@@ -293,7 +337,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             ),
             child: FloatingActionButton(
               backgroundColor: Colors.transparent,
-              onPressed: shareImageToInstagramStory,
+              onPressed: checkAndShareImageToInstagramStory,
               child: Image.asset(
                 'assets/instagram_icon_bw.png',
                 width: 28,
