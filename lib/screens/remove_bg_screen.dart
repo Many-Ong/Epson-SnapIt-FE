@@ -52,10 +52,10 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
 
     List<String> processedImageUrls = [];
 
-    for (var imageFile in uploadedImages) {
+    for (int i = 0; i < uploadedImages.length; i++) {
       try {
         LocalRembgResultModel localRembgResultModel =
-            await LocalRembg.removeBackground(imagePath: imageFile.path);
+            await LocalRembg.removeBackground(imagePath: uploadedImages[i].path);
         if (localRembgResultModel.status == 1) {
           Uint8List imageBytes =
               Uint8List.fromList(localRembgResultModel.imageBytes!);
@@ -67,9 +67,13 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
               'Background removal failed: ${localRembgResultModel.errorMessage}');
         }
       } catch (e) {
-        print('Error processing image: $e');
-        // Show alert and clear uploaded images
-        _showAlertAndChooseWays();
+        print('Error processing ${i+1}th image: $e');
+        // Show alert and wait for user response
+        await showDialog<void>(
+            context: context,
+            builder: (BuildContext context) {
+              return _showAlertAndChooseWays(context, i+1);
+            });
       }
     }
 
@@ -81,7 +85,7 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
       _showAlertAndClearImages();
       return;
     } else if (processedImageUrls.length < 4) {
-      useSuccessfulPhotos();
+      processedImageUrls = useSuccessfulPhotos(processedImageUrls);
     }
 
     Navigator.push(
@@ -93,13 +97,15 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
     );
   }
 
-  void useSuccessfulPhotos() {
+  List<String> useSuccessfulPhotos(List<String> processedImageUrls) {
     // 성공한 사진만 반복해서 사용하도록 처리
-    var randomIndex = 0;
-    while (processedImageUrls.length < 4) {
-      randomIndex = Random().nextInt(processedImageUrls.length);
-      processedImageUrls.add(processedImageUrls[randomIndex]);
+    List<String> newProcessedImageUrls = processedImageUrls;
+    int randomIndex;
+    while (newProcessedImageUrls.length < 4) {
+      randomIndex = Random().nextInt(newProcessedImageUrls.length);
+      newProcessedImageUrls.add(processedImageUrls[randomIndex]);
     }
+    return newProcessedImageUrls;
   }
 
   void _showAlertAndClearImages() {
@@ -109,8 +115,7 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
       builder: (BuildContext context) {
         return CupertinoAlertDialog(
           title: Text('Background removal failed for all photos'),
-          content: Text(
-              'Please try again with different photos.'),
+          content: Text('Please try again with different photos.'),
           actions: <Widget>[
             TextButton(
               child: Text(
@@ -132,43 +137,38 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
     );
   }
 
-  void _showAlertAndChooseWays() {
+  Widget _showAlertAndChooseWays(BuildContext context, int index) {
     // 한 이미지에서 배경 제거 실패 시
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return CupertinoAlertDialog(
-          title: Text('Background removal failed'),
-          content: Text(
-              'This process failed for the nth photo.\nPlease choose an option below.'),
-          actions: <Widget>[
-            TextButton(
-              child: Text(
-                'Use Successful Photos',
-                style: TextStyle(color: Colors.blue),
-              ),
-              onPressed: () {
-                // 현재 다이얼로그를 닫고 이전 과정을 이어서 실행
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text(
-                'Re-upload All Photos',
-                style: TextStyle(color: Colors.blue),
-              ),
-              onPressed: () {
-                // 사용자가 전체 사진을 재업로드할 수 있도록 처리
-                setState(() {
-                  isLoading = false;
-                  uploadedImages.clear();
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
+    return CupertinoAlertDialog(
+      title: Text('Background removal failed'),
+      content: Text(
+          'This process failed for the ${index}th photo.\nPlease choose an option below.'),
+      actions: <Widget>[
+        TextButton(
+          child: Text(
+            'Use Only Successful Photos in a Random Order',
+            style: TextStyle(color: Colors.blue),
+          ),
+          onPressed: () {
+            // 현재 다이얼로그를 닫고 이전 과정을 이어서 실행
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+          child: Text(
+            'Re-upload All Photos',
+            style: TextStyle(color: Colors.blue),
+          ),
+          onPressed: () {
+            // 사용자가 전체 사진을 재업로드할 수 있도록 처리
+            setState(() {
+              isLoading = false;
+              uploadedImages.clear();
+            });
+            Navigator.of(context).pop();
+          },
+        ),
+      ],
     );
   }
 
