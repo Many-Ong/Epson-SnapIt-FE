@@ -50,7 +50,6 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
       isLoading = true;
     });
 
-    final random = Random();
     List<String> processedImageUrls = [];
 
     for (var imageFile in uploadedImages) {
@@ -63,14 +62,14 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
           String imageUrl = await _saveImageToFileSystem(imageBytes);
           processedImageUrls.add(imageUrl);
         } else {
+          // 배경 제거 실패 시
           throw Exception(
               'Background removal failed: ${localRembgResultModel.errorMessage}');
         }
       } catch (e) {
         print('Error processing image: $e');
         // Show alert and clear uploaded images
-        _showAlertAndClearImages();
-        return; // Exit the function
+        _showAlertAndChooseWays();
       }
     }
 
@@ -78,34 +77,40 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
       isLoading = false;
     });
 
-    if (processedImageUrls.length >= 4) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => CameraScreen(
-              overlayImages: processedImageUrls, isBasicFrame: false),
-        ),
-      );
-    } else {
-      // Handle the error or inform the user
-      print('Not enough images processed successfully.');
+    if (processedImageUrls.isEmpty) {
       _showAlertAndClearImages();
+      return;
+    } else if (processedImageUrls.length < 4) {
+      useSuccessfulPhotos();
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CameraScreen(
+            overlayImages: processedImageUrls, isBasicFrame: false),
+      ),
+    );
+  }
+
+  void useSuccessfulPhotos() {
+    // 성공한 사진만 반복해서 사용하도록 처리
+    var randomIndex = 0;
+    while (processedImageUrls.length < 4) {
+      randomIndex = Random().nextInt(processedImageUrls.length);
+      processedImageUrls.add(processedImageUrls[randomIndex]);
     }
   }
 
   void _showAlertAndClearImages() {
-    setState(() {
-      isLoading = false;
-      uploadedImages.clear();
-    });
-
+    // 모든 이미지에서 배경 제거 실패 시
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return CupertinoAlertDialog(
-          title: Text('Background removal failed'),
+          title: Text('Background removal failed for all photos'),
           content: Text(
-              'Only portrait photos can have their background removed. Please select other images.'),
+              'Please try again with different photos.'),
           actions: <Widget>[
             TextButton(
               child: Text(
@@ -113,6 +118,51 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
                 style: TextStyle(color: Colors.blue),
               ),
               onPressed: () {
+                // 사용자가 다시 업로드할 수 있도록 처리
+                setState(() {
+                  isLoading = false;
+                  uploadedImages.clear();
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showAlertAndChooseWays() {
+    // 한 이미지에서 배경 제거 실패 시
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CupertinoAlertDialog(
+          title: Text('Background removal failed'),
+          content: Text(
+              'This process failed for the nth photo.\nPlease choose an option below.'),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Use Successful Photos',
+                style: TextStyle(color: Colors.blue),
+              ),
+              onPressed: () {
+                // 현재 다이얼로그를 닫고 이전 과정을 이어서 실행
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Re-upload All Photos',
+                style: TextStyle(color: Colors.blue),
+              ),
+              onPressed: () {
+                // 사용자가 전체 사진을 재업로드할 수 있도록 처리
+                setState(() {
+                  isLoading = false;
+                  uploadedImages.clear();
+                });
                 Navigator.of(context).pop();
               },
             ),
