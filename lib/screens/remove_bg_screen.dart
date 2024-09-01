@@ -69,12 +69,22 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
         }
       } catch (e) {
         print('Error processing ${i + 1}th image: $e');
-        // Show alert and wait for user response
-        await showDialog<void>(
-            context: context,
-            builder: (BuildContext context) {
-              return _showAlertAndChooseWays(context, i + 1);
-            });
+        // 배경 제거 실패 시 사용자의 선택에 따라 다음 단계 진행
+        bool? shouldReupload = await showDialog<bool>( 
+          context: context,
+          builder: (BuildContext context) {
+            return _showAlertAndChooseWays(context, i + 1);
+          },
+        );
+        // 사용자가 전체 사진을 재업로드하기로 결정했을 때
+        // 또는 사용자가 dialog에서 선택하지 않았을 때
+        if (shouldReupload == null || shouldReupload) {
+          setState(() {
+            isLoading = false;
+            uploadedImages.clear();
+          });
+          return;
+        }
       }
     }
 
@@ -174,7 +184,7 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
               ),
               onPressed: () {
                 // 현재 다이얼로그를 닫고 이전 과정을 이어서 실행
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(false);
               },
             ),
           ),
@@ -188,11 +198,7 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
               ),
               onPressed: () {
                 // 사용자가 전체 사진을 재업로드할 수 있도록 처리
-                setState(() {
-                  isLoading = false;
-                  uploadedImages.clear();
-                });
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(true);
               },
             ),
           ),
