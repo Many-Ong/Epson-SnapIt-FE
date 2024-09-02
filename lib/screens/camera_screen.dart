@@ -82,19 +82,20 @@ class _CameraScreenState extends State<CameraScreen> {
           if (snapshot.connectionState == ConnectionState.done) {
             return Stack(
               children: <Widget>[
-                Center(
-                  heightFactor: 2,
-                  child: AspectRatio(
-                    aspectRatio: 4 / 3,
-                    child: ClipRect(
-                      child: Transform.scale(
-                          scale: _controller.value.aspectRatio / 3 * 4,
-                          child: Center(
-                            child: CameraPreview(_controller),
-                          )),
+                if (!widget.isBasicFrame)
+                  Center(
+                    heightFactor: 2,
+                    child: AspectRatio(
+                      aspectRatio: 4 / 3,
+                      child: ClipRect(
+                        child: Transform.scale(
+                            scale: _controller.value.aspectRatio / 3 * 4,
+                            child: Center(
+                              child: CameraPreview(_controller),
+                            )),
+                      ),
                     ),
                   ),
-                ),
                 if (!widget.isBasicFrame)
                   Center(
                     heightFactor: 2,
@@ -112,10 +113,27 @@ class _CameraScreenState extends State<CameraScreen> {
                                 ),
                     ),
                   ),
+                if (widget.isBasicFrame)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: AspectRatio(
+                      aspectRatio: 3 / 4,
+                      child: ClipRect(
+                        child: Transform.scale(
+                          scale: _controller.value.aspectRatio / 4 * 3,
+                          child: Center(
+                            child: CameraPreview(_controller),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
-                    padding: const EdgeInsets.only(bottom: 80),
+                    padding: const EdgeInsets.only(bottom: 85),
                     child: Container(
                       padding: EdgeInsets.all(4),
                       width: 70,
@@ -153,8 +171,9 @@ class _CameraScreenState extends State<CameraScreen> {
                                       .buffer
                                       .asUint8List())!;
 
-                              img.Image mergedFourImage =
-                                  await mergeFourImages();
+                              img.Image mergedFourImage = widget.isBasicFrame
+                                  ? await mergeFourImages('2x2')
+                                  : await mergeFourImages('1x4');
 
                               if (pictureCount != 3) {
                                 setState(() {
@@ -201,7 +220,7 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
-    img.Image croppedImage = cropImage(baseImage);
+    img.Image croppedImage = cropImage(baseImage, aspectRatio: '3:4');
 
     String newPath = '${file.parent.path}/cropped_${DateTime.now()}.png';
     File newImageFile = File(newPath)
@@ -210,16 +229,31 @@ class _CameraScreenState extends State<CameraScreen> {
     return newImageFile.path;
   }
 
-  img.Image cropImage(img.Image baseImage) {
+  img.Image flipImage(img.Image baseImage) {
+    img.Image flippedImage = img.flipHorizontal(baseImage);
+    return flippedImage;
+  }
+
+  img.Image cropImage(img.Image baseImage, {String aspectRatio = '4:3'}) {
     img.Image flippedImage = img.flipHorizontal(baseImage);
 
     int targetWidth, targetHeight;
-    if (baseImage.width / baseImage.height > 4 / 3) {
-      targetHeight = baseImage.height;
-      targetWidth = (baseImage.height * 4) ~/ 3;
+    if (aspectRatio == '4:3') {
+      if (baseImage.width / baseImage.height > 4 / 3) {
+        targetHeight = baseImage.height;
+        targetWidth = (baseImage.height * 4) ~/ 3;
+      } else {
+        targetWidth = baseImage.width;
+        targetHeight = (baseImage.width * 3) ~/ 4;
+      }
     } else {
-      targetWidth = baseImage.width;
-      targetHeight = (baseImage.width * 3) ~/ 4;
+      if (baseImage.width / baseImage.height > 3 / 4) {
+        targetHeight = baseImage.height;
+        targetWidth = (baseImage.height * 3) ~/ 4;
+      } else {
+        targetWidth = baseImage.width;
+        targetHeight = (baseImage.width * 4) ~/ 3;
+      }
     }
 
     int startX = (baseImage.width - targetWidth) ~/ 2;
@@ -239,7 +273,7 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
-    img.Image croppedImage = cropImage(baseImage);
+    img.Image croppedImage = cropImage(baseImage, aspectRatio: '4:3');
 
     img.Image overlayImage;
     if (overlayPath.startsWith('http')) {
@@ -269,43 +303,75 @@ class _CameraScreenState extends State<CameraScreen> {
     return newImageFile.path;
   }
 
-  Future<img.Image> mergeFourImages() async {
+  Future<img.Image> mergeFourImages(String grid) async {
     List<img.Image> images = [];
     for (String path in takenPictures) {
       img.Image image = img.decodeImage(File(path).readAsBytesSync())!;
       images.add(image);
     }
 
-    ByteData logoData = await rootBundle.load('assets/logo_black.png');
-    img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
+    if (grid == '2x2') {
+      int gap = 60; // Gap between images
 
-    int imageWidth = images[0].width;
-    int imageHeight = images[0].height;
-    int gap = 35;
+      // Resize images to fit in a 2x2 grid without cropping
+      int maxWidth =
+          images.map((image) => image.width).reduce((a, b) => a > b ? a : b);
+      int maxHeight =
+          images.map((image) => image.height).reduce((a, b) => a > b ? a : b);
 
-    print('imageWidth: $imageWidth');
-    print('imageHeight: $imageHeight');
+      // Resize images to fit within the grid cells, keeping aspect ratio
+      images = images.map((image) {
+        return img.copyResize(image, width: (maxWidth), height: (maxHeight));
+      }).toList();
 
-    int width = (imageWidth * 2) + (7 * gap);
-    int height = (imageHeight * 4) + (3 * gap) + logoImage.height + gap;
+      // Define the size of the final image based on resized dimensions and gaps
+      int width = (maxWidth * 2) + (3 * gap); // Two images wide plus gaps
+      int height = (maxHeight * 2) + (3 * gap) + 20;
 
-    print('logoImage width: ${logoImage.width}');
-    print('logoImage height: ${logoImage.height}');
+      // Create the base image for the 2x2 grid
+      img.Image mergedFourImage = img.Image(width, height + 360);
 
-    img.Image mergedFourImage = img.Image(width, height + 360);
+      // Place the images in a 2x2 grid
+      for (int i = 0; i < images.length; i++) {
+        int offsetX = (i % 2) * (maxWidth + gap) + gap; // Column position
+        int offsetY = (i ~/ 2) * (maxHeight + gap) + gap; // Row position
+        img.copyInto(mergedFourImage, images[i], dstX: offsetX, dstY: offsetY);
+      }
+      return mergedFourImage;
+    } else if (grid == '1x4') {
+      ByteData logoData = await rootBundle.load('assets/logo_black.png');
+      img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
 
-    int offsetY = 40;
-    for (img.Image image in images) {
-      img.copyInto(mergedFourImage, image, dstX: gap * 2, dstY: offsetY);
-      offsetY += (image.height + 2 * gap);
+      int imageWidth = images[0].width;
+      int imageHeight = images[0].height;
+      int gap = 35;
+
+      print('imageWidth: $imageWidth');
+      print('imageHeight: $imageHeight');
+
+      int width = (imageWidth * 2) + (7 * gap);
+      int height = (imageHeight * 4) + (3 * gap) + logoImage.height + gap;
+
+      print('logoImage width: ${logoImage.width}');
+      print('logoImage height: ${logoImage.height}');
+
+      img.Image mergedFourImage = img.Image(width, height + 360);
+
+      int offsetY = 40;
+      for (img.Image image in images) {
+        img.copyInto(mergedFourImage, image, dstX: gap * 2, dstY: offsetY);
+        offsetY += (image.height + 2 * gap);
+      }
+
+      img.copyInto(mergedFourImage, mergedFourImage,
+          dstX: mergedFourImage.width ~/ 2, dstY: 0);
+
+      img.copyInto(mergedFourImage, mergedFourImage,
+          dstX: mergedFourImage.width ~/ 2, dstY: 0);
+
+      return mergedFourImage;
+    } else {
+      return img.Image(0, 0);
     }
-
-    img.copyInto(mergedFourImage, mergedFourImage,
-        dstX: mergedFourImage.width ~/ 2, dstY: 0);
-
-    img.copyInto(mergedFourImage, mergedFourImage,
-        dstX: mergedFourImage.width ~/ 2, dstY: 0);
-
-    return mergedFourImage;
   }
 }
