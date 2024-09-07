@@ -139,8 +139,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Instagram Not Installed'),
-          content: Text(
-              'Install Instagram to share your story?'),
+          content: Text('Install Instagram to share your story?'),
           actions: <Widget>[
             TextButton(
               child: Text('Cancel'),
