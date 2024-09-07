@@ -36,14 +36,6 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              "Choose Theme",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
             SizedBox(height: 70),
             largeButton(
               context,
@@ -64,20 +56,6 @@ class HomeScreen extends StatelessWidget {
               },
             ),
             SizedBox(height: 40), // 버튼 사이의 간격
-            largeButton(
-              context,
-              "assets/select_overlay.png", // 두 번째 버튼의 이미지
-              "Your Own\nOverlay Frame",
-              "You can upload a person’s picture as an overlay image and take a picture with them!",
-              () {
-                print("Upload & Overlay Button Pressed"); // 두 번째 버튼의 액션
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => RemoveBackGroundScreen()),
-                );
-              },
-            ),
           ],
         ),
       ),
