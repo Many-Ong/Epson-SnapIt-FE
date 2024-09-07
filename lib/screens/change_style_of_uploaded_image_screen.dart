@@ -75,6 +75,8 @@ class _ChangeStyleOfUploadedImageScreenState
       MaterialPageRoute(
         builder: (context) => CameraScreen(
           overlayImages: processedImageUrls,
+          isBasicFrame: false,
+          grid: '4x1',
         ),
       ),
     );

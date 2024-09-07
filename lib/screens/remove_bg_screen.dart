@@ -70,7 +70,7 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
       } catch (e) {
         print('Error processing ${i + 1}th image: $e');
         // 배경 제거 실패 시 사용자의 선택에 따라 다음 단계 진행
-        bool? shouldReupload = await showDialog<bool>( 
+        bool? shouldReupload = await showDialog<bool>(
           context: context,
           builder: (BuildContext context) {
             return _showAlertAndChooseWays(context, i + 1);
@@ -103,7 +103,9 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => CameraScreen(
-            overlayImages: processedImageUrls, isBasicFrame: false),
+            overlayImages: processedImageUrls,
+            isBasicFrame: false,
+            grid: '4x1'),
       ),
     );
   }
