@@ -11,11 +11,13 @@ import 'package:http/http.dart' as http;
 class CameraScreen extends StatefulWidget {
   final List<String> overlayImages;
   final bool isBasicFrame;
+  final String grid;
 
   const CameraScreen({
     super.key,
     required this.overlayImages,
     required this.isBasicFrame,
+    required this.grid,
   });
 
   @override
@@ -82,7 +84,7 @@ class _CameraScreenState extends State<CameraScreen> {
           if (snapshot.connectionState == ConnectionState.done) {
             return Stack(
               children: <Widget>[
-                if (!widget.isBasicFrame)
+                if (!widget.isBasicFrame || widget.grid == '4x1')
                   Center(
                     heightFactor: 2,
                     child: AspectRatio(
@@ -113,7 +115,7 @@ class _CameraScreenState extends State<CameraScreen> {
                                 ),
                     ),
                   ),
-                if (widget.isBasicFrame)
+                if (widget.isBasicFrame && widget.grid == '2x2')
                   Positioned(
                     top: 0,
                     left: 0,
@@ -171,9 +173,10 @@ class _CameraScreenState extends State<CameraScreen> {
                                       .buffer
                                       .asUint8List())!;
 
-                              img.Image mergedFourImage = widget.isBasicFrame
-                                  ? await mergeFourImages('2x2')
-                                  : await mergeFourImages('1x4');
+                              img.Image mergedFourImage =
+                                  !widget.isBasicFrame || widget.grid == '4x1'
+                                      ? await mergeFourImages('4x1')
+                                      : await mergeFourImages('2x2');
 
                               if (pictureCount != 3) {
                                 setState(() {
@@ -220,7 +223,8 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
-    img.Image croppedImage = cropImage(baseImage, aspectRatio: '3:4');
+    img.Image croppedImage =
+        cropImage(baseImage, aspectRatio: widget.grid == '2x2' ? '3:4' : '4:3');
 
     String newPath = '${file.parent.path}/cropped_${DateTime.now()}.png';
     File newImageFile = File(newPath)
@@ -273,7 +277,8 @@ class _CameraScreenState extends State<CameraScreen> {
     }
 
     img.Image baseImage = img.decodeImage(file.readAsBytesSync())!;
-    img.Image croppedImage = cropImage(baseImage, aspectRatio: '4:3');
+    img.Image croppedImage =
+        cropImage(baseImage, aspectRatio: widget.grid == '2x2' ? '4:3' : '3:4');
 
     img.Image overlayImage;
     if (overlayPath.startsWith('http')) {
@@ -338,7 +343,7 @@ class _CameraScreenState extends State<CameraScreen> {
         img.copyInto(mergedFourImage, images[i], dstX: offsetX, dstY: offsetY);
       }
       return mergedFourImage;
-    } else if (grid == '1x4') {
+    } else if (grid == '4x1') {
       ByteData logoData = await rootBundle.load('assets/logo_black.png');
       img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
 

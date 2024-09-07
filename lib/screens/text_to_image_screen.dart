@@ -93,6 +93,8 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
       MaterialPageRoute(
         builder: (context) => CameraScreen(
           overlayImages: generatedImageUrls,
+          isBasicFrame: false,
+          grid: '4x1',
         ),
       ),
     );
@@ -144,7 +146,7 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
       ),
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: Column( 
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Padding(
@@ -182,6 +184,8 @@ class _TextToImageScreenState extends State<TextToImageScreen> {
                           MaterialPageRoute(
                               builder: (context) => CameraScreen(
                                     overlayImages: generatedImageUrls,
+                                    isBasicFrame: false,
+                                    grid: '4x1',
                                   )),
                         );
                       }

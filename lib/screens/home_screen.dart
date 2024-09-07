@@ -39,9 +39,28 @@ class HomeScreen extends StatelessWidget {
             SizedBox(height: 70),
             largeButton(
               context,
-              "assets/select_basic.png", // 첫 번째 버튼의 이미지
-              "Basic Frame", // 첫 번째 버튼의 설명
-              "You can take a picture with simple, standard frame",
+              "assets/select_basic.png",
+              "4-cut 4x1",
+              "You can take 4-cut photos with simple, standard frame",
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CameraScreen(
+                      overlayImages: [],
+                      isBasicFrame: true,
+                      grid: '4x1',
+                    ),
+                  ),
+                );
+              },
+            ),
+            SizedBox(height: 40),
+            largeButton(
+              context,
+              "assets/select_2x2.png",
+              "4-cut 2x2",
+              "You can take 4-cut photos with 2x2 grid frame",
               () {
                 print("Basic Button Pressed"); // 첫 번째 버튼의 액션
                 Navigator.push(
@@ -50,12 +69,12 @@ class HomeScreen extends StatelessWidget {
                     builder: (context) => CameraScreen(
                       overlayImages: [],
                       isBasicFrame: true,
+                      grid: '2x2',
                     ),
                   ),
                 );
               },
-            ),
-            SizedBox(height: 40), // 버튼 사이의 간격
+            ), // 버튼 사이의 간격
           ],
         ),
       ),

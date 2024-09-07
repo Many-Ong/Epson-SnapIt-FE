@@ -91,6 +91,8 @@ class _FrameSelectionScreenState extends State<FrameSelectionScreen> {
                     MaterialPageRoute(
                       builder: (context) => CameraScreen(
                         overlayImages: widget.overlayImages,
+                        isBasicFrame: false,
+                        grid: '4x1',
                       ),
                     ),
                   );
