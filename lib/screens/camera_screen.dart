@@ -31,11 +31,29 @@ class _CameraScreenState extends State<CameraScreen> {
   int pictureCount = 0;
   List<String> takenPictures = [];
   int overlayIndex = 0;
+  img.Image logoImage = img.Image(0, 0);
+  img.Image duplicatedLogoImage = img.Image(0, 0);
 
   @override
   void initState() {
     super.initState();
     initCamera();
+
+    loadLogoImage();
+  }
+
+  Future<void> loadLogoImage() async {
+    ByteData logoData = await rootBundle.load('assets/logo_black.png');
+    logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
+
+    // Initialize the duplicated logo image
+    int duplicatedLogoWidth = (logoImage.width * 2);
+    duplicatedLogoImage = img.Image(duplicatedLogoWidth, logoImage.height);
+
+    // Copy the logo into the new duplicated logo image twice
+    img.copyInto(duplicatedLogoImage, logoImage, dstX: 0, dstY: 0);
+    img.copyInto(duplicatedLogoImage, logoImage,
+        dstX: duplicatedLogoWidth - logoImage.width, dstY: 0);
   }
 
   Future<void> initCamera() async {
@@ -158,14 +176,12 @@ class _CameraScreenState extends State<CameraScreen> {
                             if (pictureCount < 4) {
                               final XFile image =
                                   await _controller.takePicture();
-                              String overlayImagePath = widget.isBasicFrame
+                              String takenPicture = widget.isBasicFrame
                                   ? await cropAndSaveImage(image)
                                   : await mergeImage(image,
                                       widget.overlayImages[overlayIndex]);
-                              takenPictures.add(overlayImagePath);
+                              takenPictures.add(takenPicture);
                               if (!widget.isBasicFrame) changeOverlayImage();
-
-                              print('pictureCount $pictureCount');
 
                               img.Image logoImage = img.decodeImage(
                                   (await rootBundle
@@ -187,7 +203,6 @@ class _CameraScreenState extends State<CameraScreen> {
                                   MaterialPageRoute(
                                     builder: (context) => DisplayPictureScreen(
                                       mergedFourImage: mergedFourImage,
-                                      logoImage: logoImage,
                                       context: context,
                                     ),
                                   ),
@@ -342,23 +357,19 @@ class _CameraScreenState extends State<CameraScreen> {
         int offsetY = (i ~/ 2) * (maxHeight + gap) + gap; // Row position
         img.copyInto(mergedFourImage, images[i], dstX: offsetX, dstY: offsetY);
       }
+
+      img.copyInto(mergedFourImage, duplicatedLogoImage,
+          dstX: (mergedFourImage.width - duplicatedLogoImage.width) ~/ 2,
+          dstY: mergedFourImage.height - duplicatedLogoImage.height - 120);
+
       return mergedFourImage;
     } else if (grid == '4x1') {
-      ByteData logoData = await rootBundle.load('assets/logo_black.png');
-      img.Image logoImage = img.decodeImage(logoData.buffer.asUint8List())!;
-
       int imageWidth = images[0].width;
       int imageHeight = images[0].height;
       int gap = 35;
 
-      print('imageWidth: $imageWidth');
-      print('imageHeight: $imageHeight');
-
       int width = (imageWidth * 2) + (7 * gap);
       int height = (imageHeight * 4) + (3 * gap) + logoImage.height + gap;
-
-      print('logoImage width: ${logoImage.width}');
-      print('logoImage height: ${logoImage.height}');
 
       img.Image mergedFourImage = img.Image(width, height + 360);
 
@@ -374,6 +385,9 @@ class _CameraScreenState extends State<CameraScreen> {
       img.copyInto(mergedFourImage, mergedFourImage,
           dstX: mergedFourImage.width ~/ 2, dstY: 0);
 
+      img.copyInto(mergedFourImage, duplicatedLogoImage,
+          dstX: (mergedFourImage.width - duplicatedLogoImage.width) ~/ 2,
+          dstY: mergedFourImage.height - duplicatedLogoImage.height - 120);
       return mergedFourImage;
     } else {
       return img.Image(0, 0);

@@ -10,19 +10,16 @@ import 'package:snapit/screens/home_screen.dart';
 import 'package:social_share/social_share.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:image/image.dart' as img;
-import 'package:flutter/material.dart' hide Image;
 import 'package:flutter/cupertino.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class DisplayPictureScreen extends StatefulWidget {
   final img.Image mergedFourImage;
-  final img.Image logoImage;
   final String appId;
 
   DisplayPictureScreen({
     required this.mergedFourImage,
-    required this.logoImage,
     required BuildContext context,
   }) : appId = dotenv.env['APP_ID']!;
 
@@ -32,69 +29,49 @@ class DisplayPictureScreen extends StatefulWidget {
 
 class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   Color selectedFrameColor = Colors.white;
-  late img.Image coloredImage;
+  late Uint8List originalImageBytes; // Store the original image bytes
   bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    applyFrameColor(selectedFrameColor);
+    // Initialize the original image bytes
+    originalImageBytes =
+        Uint8List.fromList(img.encodePng(widget.mergedFourImage));
   }
 
-  void applyFrameColor(Color color) async {
-    setState(() {
-      selectedFrameColor = color;
-      isLoading = true;
-    });
+  Future<String> createImageFile(Uint8List imageBytes) async {
+    // Create the framed image with the selected frame color
+    final framedImage =
+        applyFrameColor(widget.mergedFourImage, selectedFrameColor);
 
-    await Future.delayed(Duration(milliseconds: 50)); // Ensure UI updates
-
-    coloredImage =
-        img.Image(widget.mergedFourImage.width, widget.mergedFourImage.height);
-
-    img.fill(coloredImage, img.getColor(color.red, color.green, color.blue));
-
-    img.copyInto(coloredImage, widget.mergedFourImage, dstX: 0, dstY: 0);
-
-    img.Image logoToApply =
-        color == Colors.black ? _invertLogo() : widget.logoImage;
-    img.copyInto(coloredImage, logoToApply,
-        dstX: (coloredImage.width ~/ 2 - logoToApply.width) ~/ 2,
-        dstY: coloredImage.height - logoToApply.height - 120);
-
-    img.copyInto(coloredImage, logoToApply,
-        dstX: coloredImage.width -
-            ((coloredImage.width ~/ 2 + logoToApply.width) ~/ 2),
-        dstY: coloredImage.height - logoToApply.height - 120);
-
-    setState(() {
-      isLoading = false;
-    });
-  }
-
-  img.Image _invertLogo() {
-    img.Image invertedLogo = img.copyResize(widget.logoImage,
-        width: widget.logoImage.width, height: widget.logoImage.height);
-    for (int y = 0; y < invertedLogo.height; y++) {
-      for (int x = 0; x < invertedLogo.width; x++) {
-        if (invertedLogo.getPixel(x, y) == img.getColor(0, 0, 0)) {
-          invertedLogo.setPixel(x, y, img.getColor(255, 255, 255));
-        }
-      }
-    }
-    return invertedLogo;
-  }
-
-  Future<String> createImageFile(img.Image displayedImage) async {
     final tempDir = await getTemporaryDirectory();
     final tempFile = await File('${tempDir.path}/temp_image.png').create();
-    await tempFile.writeAsBytes(img.encodePng(displayedImage));
-
+    await tempFile.writeAsBytes(img.encodePng(framedImage));
     return tempFile.path;
   }
 
+  // Function to apply frame color to the image
+  img.Image applyFrameColor(img.Image baseImage, Color frameColor) {
+    // Create a new image with padding for the frame
+    final int frameWidth = 20; // Set frame width
+    final img.Image framedImage = img.Image(
+      baseImage.width + 2 * frameWidth,
+      baseImage.height + 2 * frameWidth,
+    );
+
+    // Fill the frame area with the selected color
+    img.fill(framedImage,
+        img.getColor(frameColor.red, frameColor.green, frameColor.blue));
+
+    // Copy the original image onto the framed image
+    img.copyInto(framedImage, baseImage, dstX: frameWidth, dstY: frameWidth);
+
+    return framedImage;
+  }
+
   Future<void> saveImageToGallery() async {
-    String imageFilePath = await createImageFile(coloredImage);
+    String imageFilePath = await createImageFile(originalImageBytes);
 
     final result = await Permission.storage.request();
     if (result.isGranted) {
@@ -118,12 +95,8 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     }
   }
 
-  //인스타그램 앱 유무를 확인하고 인스타그램 스토리에 이미지를 공유하는 메서드
   Future<void> checkAndShareImageToInstagramStory() async {
-    //인스타그램 URL 스킴
     const instagramUrl = 'instagram://app';
-
-    //인스타그램이 설치되어 있는지 확인
     if (await canLaunchUrlString(instagramUrl)) {
       await shareImageToInstagramStory();
     } else {
@@ -132,7 +105,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     }
   }
 
-  //인스타그램 설치 다이얼로그를 표시하는 메서드
   void showInstallInstagramDialog() {
     showDialog(
       context: context,
@@ -160,7 +132,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   }
 
   Future<void> shareImageToInstagramStory() async {
-    String imageFilePath = await createImageFile(coloredImage);
+    String imageFilePath = await createImageFile(originalImageBytes);
 
     await SocialShare.shareInstagramStory(
       appId: widget.appId,
@@ -171,7 +143,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   }
 
   Future<void> shareImage() async {
-    String imageFilePath = await createImageFile(coloredImage);
+    String imageFilePath = await createImageFile(originalImageBytes);
 
     File imageFile = File(imageFilePath);
     final Uint8List imageBytes = imageFile.readAsBytesSync();
@@ -213,6 +185,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Color> frameColors = [
+      const Color.fromARGB(255, 171, 39, 52),
       const Color.fromARGB(255, 255, 200, 221),
       const Color.fromARGB(255, 255, 175, 204),
       const Color.fromARGB(255, 255, 173, 173),
@@ -225,7 +198,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
       const Color.fromARGB(255, 189, 178, 255),
       const Color.fromARGB(255, 205, 180, 219),
       const Color.fromARGB(255, 192, 192, 192),
-      Colors.black,
       Colors.white,
     ];
 
@@ -270,9 +242,14 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
                             color: Colors.white,
                             fontSize: 24,
                             fontFamily: 'Roboto'))
-                    : Image.memory(
-                        Uint8List.fromList(img.encodePng(coloredImage)),
-                        fit: BoxFit.cover),
+                    : Container(
+                        padding: EdgeInsets.all(2), // Padding for the frame
+                        color: selectedFrameColor, // Frame color
+                        child: Image.memory(
+                          originalImageBytes,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
               ),
             ),
             SizedBox(height: 20),
@@ -284,7 +261,9 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
                 children: frameColors.map((color) {
                   return GestureDetector(
                     onTap: () {
-                      applyFrameColor(color);
+                      setState(() {
+                        selectedFrameColor = color;
+                      });
                     },
                     child: Container(
                       width: 40,
