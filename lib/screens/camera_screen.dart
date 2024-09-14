@@ -1,3 +1,4 @@
+import 'dart:async'; // Import for Timer
 import 'dart:io';
 import 'package:flutter/material.dart' hide Image;
 import 'package:flutter/material.dart' as flutter;
@@ -24,7 +25,8 @@ class CameraScreen extends StatefulWidget {
   _CameraScreenState createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends State<CameraScreen> {
+class _CameraScreenState extends State<CameraScreen>
+    with SingleTickerProviderStateMixin {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
   List<CameraDescription> cameras = [];
@@ -34,12 +36,35 @@ class _CameraScreenState extends State<CameraScreen> {
   img.Image logoImage = img.Image(0, 0);
   img.Image duplicatedLogoImage = img.Image(0, 0);
 
+  Timer? _timer; // Timer object for countdown
+  int _countdown = 7; // Countdown start value
+  bool isShowingTakenPhoto = false; // Flag to show the taken photo
+  bool isFlashing = false; // Flag for flash effect
+
+  late AnimationController
+      _flashController; // Animation controller for flash effect
+  late Animation<double> _flashAnimation; // Animation for flash effect
+
   @override
   void initState() {
     super.initState();
     initCamera();
-
     loadLogoImage();
+
+    // Initialize the flash animation controller
+    _flashController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 100), // Duration for flash effect
+    );
+
+    _flashAnimation = Tween<double>(begin: 1, end: 0).animate(_flashController)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          setState(() {
+            isFlashing = false; // Hide flash effect after animation completes
+          });
+        }
+      });
   }
 
   Future<void> loadLogoImage() async {
@@ -68,7 +93,9 @@ class _CameraScreenState extends State<CameraScreen> {
       if (!mounted) return;
       await _controller.setExposureMode(ExposureMode.auto);
       await _controller.setFlashMode(FlashMode.off);
-      setState(() {});
+      setState(() {
+        startTimer(); // Start the timer when the camera is initialized
+      });
     }).catchError((error) {
       print('Error initializing camera: $error');
     });
@@ -77,6 +104,8 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    _timer?.cancel(); // Cancel the timer when disposing
+    _flashController.dispose(); // Dispose the flash animation controller
     super.dispose();
   }
 
@@ -84,6 +113,88 @@ class _CameraScreenState extends State<CameraScreen> {
     setState(() {
       overlayIndex = (overlayIndex + 1) % widget.overlayImages.length;
     });
+  }
+
+  void startTimer() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (_countdown == 0) {
+        timer.cancel();
+        takePhoto(); // Automatically take a photo when countdown reaches zero
+      } else {
+        setState(() {
+          _countdown--;
+        });
+      }
+    });
+  }
+
+  void resetTimer() {
+    _timer?.cancel();
+    setState(() {
+      _countdown = 7;
+    });
+  }
+
+  Future<void> takePhoto() async {
+    try {
+      await _initializeControllerFuture;
+      if (pictureCount < 4) {
+        final XFile image = await _controller.takePicture();
+        String takenPicture = widget.isBasicFrame
+            ? await cropAndSaveImage(image)
+            : await mergeImage(image, widget.overlayImages[overlayIndex]);
+        takenPictures.add(takenPicture);
+        if (!widget.isBasicFrame) changeOverlayImage();
+
+        // Trigger the flash effect
+        setState(() {
+          isFlashing = true;
+        });
+        _flashController.forward(from: 0);
+
+        // Show the taken picture for 2 seconds
+        setState(() {
+          isShowingTakenPhoto = true; // Set flag to true to show taken photo
+        });
+
+        if (pictureCount != 3) {
+          // Display the image for 1 seconds
+          await Future.delayed(Duration(seconds: 1));
+        } else {
+          await Future.delayed(Duration(milliseconds: 200));
+        }
+
+        setState(() {
+          isShowingTakenPhoto = false; // Hide the taken photo and resume camera
+        });
+
+        img.Image mergedFourImage = !widget.isBasicFrame || widget.grid == '4x1'
+            ? await mergeFourImages('4x1')
+            : await mergeFourImages('2x2');
+
+        if (pictureCount != 3) {
+          setState(() {
+            pictureCount = pictureCount + 1;
+            resetTimer(); // Reset the timer after taking a photo
+            startTimer(); // Restart the timer
+          });
+        } else {
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => DisplayPictureScreen(
+                mergedFourImage: mergedFourImage,
+                context: context,
+              ),
+            ),
+          );
+          pictureCount = 0;
+          takenPictures.clear();
+          resetTimer(); // Reset the timer after the last photo
+        }
+      }
+    } catch (e) {
+      print(e);
+    }
   }
 
   @override
@@ -102,9 +213,46 @@ class _CameraScreenState extends State<CameraScreen> {
           if (snapshot.connectionState == ConnectionState.done) {
             return Stack(
               children: <Widget>[
-                if (!widget.isBasicFrame || widget.grid == '4x1')
-                  Center(
-                    heightFactor: 2,
+                Center(
+                  heightFactor: 1,
+                  child: Text(
+                    isShowingTakenPhoto
+                        ? ''
+                        : '$_countdown', // Display the countdown
+                    style: TextStyle(color: Colors.white, fontSize: 60),
+                  ),
+                ),
+                if (isShowingTakenPhoto)
+                  // Show the last taken photo for 2 seconds
+                  if ((!widget.isBasicFrame || widget.grid == '4x1'))
+                    Positioned(
+                      top: -110,
+                      left: 0,
+                      right: 0,
+                      child: flutter.Image.file(
+                        File(takenPictures.last),
+                        fit: BoxFit.contain,
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                if (isShowingTakenPhoto)
+                  if (widget.isBasicFrame && widget.grid == '2x2')
+                    Center(
+                      heightFactor: 2,
+                      child: flutter.Image.file(
+                        File(takenPictures.last),
+                        fit: BoxFit.contain,
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                if (!isShowingTakenPhoto &&
+                    (!widget.isBasicFrame || widget.grid == '4x1'))
+                  Positioned(
+                    top: 160,
+                    left: 0,
+                    right: 0,
                     child: AspectRatio(
                       aspectRatio: 4 / 3,
                       child: ClipRect(
@@ -116,7 +264,7 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                     ),
                   ),
-                if (!widget.isBasicFrame)
+                if (!isShowingTakenPhoto && !widget.isBasicFrame)
                   Center(
                     heightFactor: 2,
                     child: AspectRatio(
@@ -133,9 +281,11 @@ class _CameraScreenState extends State<CameraScreen> {
                                 ),
                     ),
                   ),
-                if (widget.isBasicFrame && widget.grid == '2x2')
+                if (!isShowingTakenPhoto &&
+                    widget.isBasicFrame &&
+                    widget.grid == '2x2')
                   Positioned(
-                    top: 0,
+                    top: 100,
                     left: 0,
                     right: 0,
                     child: AspectRatio(
@@ -150,72 +300,47 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                     ),
                   ),
+                // Flash effect overlay
+                if (isFlashing)
+                  AnimatedBuilder(
+                    animation: _flashAnimation,
+                    builder: (context, child) {
+                      return Container(
+                        color: Colors.white.withOpacity(_flashAnimation.value),
+                      );
+                    },
+                  ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: 85),
-                    child: Container(
-                      padding: EdgeInsets.all(4),
-                      width: 70,
-                      height: 70,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 2,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(height: 10),
+                        Container(
+                          padding: EdgeInsets.all(4),
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white,
+                              width: 2,
+                            ),
+                          ),
+                          child: FloatingActionButton(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(45),
+                            ),
+                            onPressed: () {
+                              takePhoto(); // Take photo immediately on button press
+                              resetTimer();
+                            },
+                          ),
                         ),
-                      ),
-                      child: FloatingActionButton(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(45),
-                        ),
-                        onPressed: () async {
-                          try {
-                            await _initializeControllerFuture;
-                            if (pictureCount < 4) {
-                              final XFile image =
-                                  await _controller.takePicture();
-                              String takenPicture = widget.isBasicFrame
-                                  ? await cropAndSaveImage(image)
-                                  : await mergeImage(image,
-                                      widget.overlayImages[overlayIndex]);
-                              takenPictures.add(takenPicture);
-                              if (!widget.isBasicFrame) changeOverlayImage();
-
-                              img.Image logoImage = img.decodeImage(
-                                  (await rootBundle
-                                          .load('assets/logo_black.png'))
-                                      .buffer
-                                      .asUint8List())!;
-
-                              img.Image mergedFourImage =
-                                  !widget.isBasicFrame || widget.grid == '4x1'
-                                      ? await mergeFourImages('4x1')
-                                      : await mergeFourImages('2x2');
-
-                              if (pictureCount != 3) {
-                                setState(() {
-                                  pictureCount = pictureCount + 1;
-                                });
-                              } else {
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => DisplayPictureScreen(
-                                      mergedFourImage: mergedFourImage,
-                                      context: context,
-                                    ),
-                                  ),
-                                );
-                                pictureCount = 0;
-                                takenPictures.clear();
-                              }
-                            }
-                          } catch (e) {
-                            print(e);
-                          }
-                        },
-                      ),
+                      ],
                     ),
                   ),
                 ),
