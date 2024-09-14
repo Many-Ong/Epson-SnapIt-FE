@@ -25,7 +25,8 @@ class CameraScreen extends StatefulWidget {
   _CameraScreenState createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends State<CameraScreen> {
+class _CameraScreenState extends State<CameraScreen>
+    with SingleTickerProviderStateMixin {
   late CameraController _controller;
   late Future<void> _initializeControllerFuture;
   List<CameraDescription> cameras = [];
@@ -37,12 +38,33 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Timer? _timer; // Timer object for countdown
   int _countdown = 7; // Countdown start value
+  bool isShowingTakenPhoto = false; // Flag to show the taken photo
+  bool isFlashing = false; // Flag for flash effect
+
+  late AnimationController
+      _flashController; // Animation controller for flash effect
+  late Animation<double> _flashAnimation; // Animation for flash effect
 
   @override
   void initState() {
     super.initState();
-    loadLogoImage();
     initCamera();
+    loadLogoImage();
+
+    // Initialize the flash animation controller
+    _flashController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 100), // Duration for flash effect
+    );
+
+    _flashAnimation = Tween<double>(begin: 1, end: 0).animate(_flashController)
+      ..addStatusListener((status) {
+        if (status == AnimationStatus.completed) {
+          setState(() {
+            isFlashing = false; // Hide flash effect after animation completes
+          });
+        }
+      });
   }
 
   Future<void> loadLogoImage() async {
@@ -71,9 +93,9 @@ class _CameraScreenState extends State<CameraScreen> {
       if (!mounted) return;
       await _controller.setExposureMode(ExposureMode.auto);
       await _controller.setFlashMode(FlashMode.off);
-      setState(() {});
-
-      startTimer(); // Start the timer when the camera is initialized
+      setState(() {
+        startTimer(); // Start the timer when the camera is initialized
+      });
     }).catchError((error) {
       print('Error initializing camera: $error');
     });
@@ -83,6 +105,7 @@ class _CameraScreenState extends State<CameraScreen> {
   void dispose() {
     _controller.dispose();
     _timer?.cancel(); // Cancel the timer when disposing
+    _flashController.dispose(); // Dispose the flash animation controller
     super.dispose();
   }
 
@@ -123,6 +146,28 @@ class _CameraScreenState extends State<CameraScreen> {
         takenPictures.add(takenPicture);
         if (!widget.isBasicFrame) changeOverlayImage();
 
+        // Trigger the flash effect
+        setState(() {
+          isFlashing = true;
+        });
+        _flashController.forward(from: 0);
+
+        // Show the taken picture for 2 seconds
+        setState(() {
+          isShowingTakenPhoto = true; // Set flag to true to show taken photo
+        });
+
+        if (pictureCount != 3) {
+          // Display the image for 1 seconds
+          await Future.delayed(Duration(seconds: 1));
+        } else {
+          await Future.delayed(Duration(milliseconds: 200));
+        }
+
+        setState(() {
+          isShowingTakenPhoto = false; // Hide the taken photo and resume camera
+        });
+
         img.Image mergedFourImage = !widget.isBasicFrame || widget.grid == '4x1'
             ? await mergeFourImages('4x1')
             : await mergeFourImages('2x2');
@@ -130,8 +175,8 @@ class _CameraScreenState extends State<CameraScreen> {
         if (pictureCount != 3) {
           setState(() {
             pictureCount = pictureCount + 1;
-            resetTimer();
-            startTimer();
+            resetTimer(); // Reset the timer after taking a photo
+            startTimer(); // Restart the timer
           });
         } else {
           await Navigator.of(context).push(
@@ -144,7 +189,7 @@ class _CameraScreenState extends State<CameraScreen> {
           );
           pictureCount = 0;
           takenPictures.clear();
-          resetTimer();
+          resetTimer(); // Reset the timer after the last photo
         }
       }
     } catch (e) {
@@ -171,13 +216,43 @@ class _CameraScreenState extends State<CameraScreen> {
                 Center(
                   heightFactor: 1,
                   child: Text(
-                    '$_countdown', // Display the countdown
+                    isShowingTakenPhoto
+                        ? ''
+                        : '$_countdown', // Display the countdown
                     style: TextStyle(color: Colors.white, fontSize: 60),
                   ),
                 ),
-                if (!widget.isBasicFrame || widget.grid == '4x1')
-                  Center(
-                    heightFactor: 2,
+                if (isShowingTakenPhoto)
+                  // Show the last taken photo for 2 seconds
+                  if ((!widget.isBasicFrame || widget.grid == '4x1'))
+                    Positioned(
+                      top: -110,
+                      left: 0,
+                      right: 0,
+                      child: flutter.Image.file(
+                        File(takenPictures.last),
+                        fit: BoxFit.contain,
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                if (isShowingTakenPhoto)
+                  if (widget.isBasicFrame && widget.grid == '2x2')
+                    Center(
+                      heightFactor: 2,
+                      child: flutter.Image.file(
+                        File(takenPictures.last),
+                        fit: BoxFit.contain,
+                        width: MediaQuery.of(context).size.width,
+                        height: MediaQuery.of(context).size.height,
+                      ),
+                    ),
+                if (!isShowingTakenPhoto &&
+                    (!widget.isBasicFrame || widget.grid == '4x1'))
+                  Positioned(
+                    top: 160,
+                    left: 0,
+                    right: 0,
                     child: AspectRatio(
                       aspectRatio: 4 / 3,
                       child: ClipRect(
@@ -189,7 +264,7 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                     ),
                   ),
-                if (!widget.isBasicFrame)
+                if (!isShowingTakenPhoto && !widget.isBasicFrame)
                   Center(
                     heightFactor: 2,
                     child: AspectRatio(
@@ -206,7 +281,9 @@ class _CameraScreenState extends State<CameraScreen> {
                                 ),
                     ),
                   ),
-                if (widget.isBasicFrame && widget.grid == '2x2')
+                if (!isShowingTakenPhoto &&
+                    widget.isBasicFrame &&
+                    widget.grid == '2x2')
                   Positioned(
                     top: 100,
                     left: 0,
@@ -222,6 +299,16 @@ class _CameraScreenState extends State<CameraScreen> {
                         ),
                       ),
                     ),
+                  ),
+                // Flash effect overlay
+                if (isFlashing)
+                  AnimatedBuilder(
+                    animation: _flashAnimation,
+                    builder: (context, child) {
+                      return Container(
+                        color: Colors.white.withOpacity(_flashAnimation.value),
+                      );
+                    },
                   ),
                 Align(
                   alignment: Alignment.bottomCenter,
@@ -248,8 +335,8 @@ class _CameraScreenState extends State<CameraScreen> {
                               borderRadius: BorderRadius.circular(45),
                             ),
                             onPressed: () {
-                              resetTimer();
                               takePhoto(); // Take photo immediately on button press
+                              resetTimer();
                             },
                           ),
                         ),
