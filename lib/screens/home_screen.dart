@@ -36,12 +36,13 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            SizedBox(height: 70),
+            SizedBox(height: 16),
             largeButton(
               context,
-              "assets/select_basic.png",
-              "4-cut 4x1",
-              "You can take 4-cut photos with simple, standard frame",
+              "assets/select_special.png",
+              "Louie's Lounge Special Frame",
+              "You can take 4-cut photos with Louie's Lounge special frame",
+              Color.fromARGB(255, 186, 12, 47),
               () {
                 Navigator.push(
                   context,
@@ -49,18 +50,41 @@ class HomeScreen extends StatelessWidget {
                     builder: (context) => CameraScreen(
                       overlayImages: [],
                       isBasicFrame: true,
+                      isSpecialFrame: true,
+                      grid: '2x2',
+                    ),
+                  ),
+                );
+              },
+            ),
+            SizedBox(height: 16),
+            largeButton(
+              context,
+              "assets/select_basic.png",
+              "4-cut 4x1",
+              "You can take 4-cut photos with simple, standard frame",
+              Colors.black,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CameraScreen(
+                      overlayImages: [],
+                      isBasicFrame: true,
+                      isSpecialFrame: false,
                       grid: '4x1',
                     ),
                   ),
                 );
               },
             ),
-            SizedBox(height: 40),
+            SizedBox(height: 16),
             largeButton(
               context,
               "assets/select_2x2.png",
               "4-cut 2x2",
               "You can take 4-cut photos with 2x2 grid frame",
+              Colors.black,
               () {
                 print("Basic Button Pressed"); // 첫 번째 버튼의 액션
                 Navigator.push(
@@ -69,6 +93,7 @@ class HomeScreen extends StatelessWidget {
                     builder: (context) => CameraScreen(
                       overlayImages: [],
                       isBasicFrame: true,
+                      isSpecialFrame: false,
                       grid: '2x2',
                     ),
                   ),
@@ -83,15 +108,15 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget largeButton(BuildContext context, String imagePath, String title,
-      String subtitle, VoidCallback onPressed) {
+      String subtitle, Color backgroundColor, VoidCallback onPressed) {
     return InkWell(
       onTap: onPressed,
       child: Container(
         padding: EdgeInsets.all(10), // 패딩
         width: 348,
-        height: 220, // 컨테이너 높이 설정
+        height: 200, // 컨테이너 높이 설정
         decoration: BoxDecoration(
-          color: Colors.black, // 배경 색상
+          color: backgroundColor, // 배경 색상
           borderRadius: BorderRadius.circular(12), // 컨테이너 모서리 둥글게
           border: Border.all(color: Color(0xFF1F1F1F), width: 1), // 테두리 색상
         ),
@@ -139,7 +164,7 @@ class HomeScreen extends StatelessWidget {
                         subtitle,
                         style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.normal,
+                            fontWeight: FontWeight.w600,
                             color: Colors.white),
                       ),
                     ), // 하위 텍스트

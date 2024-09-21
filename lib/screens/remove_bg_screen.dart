@@ -105,6 +105,7 @@ class _RemoveBackGroundScreenState extends State<RemoveBackGroundScreen> {
         builder: (context) => CameraScreen(
             overlayImages: processedImageUrls,
             isBasicFrame: false,
+            isSpecialFrame: false,
             grid: '4x1'),
       ),
     );
