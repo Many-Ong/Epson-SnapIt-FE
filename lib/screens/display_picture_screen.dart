@@ -16,10 +16,12 @@ import 'package:url_launcher/url_launcher_string.dart';
 
 class DisplayPictureScreen extends StatefulWidget {
   final img.Image mergedFourImage;
+  final bool isSpecialFrame;
   final String appId;
 
   DisplayPictureScreen({
     required this.mergedFourImage,
+    required this.isSpecialFrame,
     required BuildContext context,
   }) : appId = dotenv.env['APP_ID']!;
 
@@ -28,9 +30,10 @@ class DisplayPictureScreen extends StatefulWidget {
 }
 
 class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
-  Color selectedFrameColor = Colors.white;
+  Color selectedFrameColor = Color.fromARGB(255, 171, 39, 52);
   late Uint8List originalImageBytes; // Store the original image bytes
   bool isLoading = false;
+  img.Image frame = img.Image(0, 0);
 
   @override
   void initState() {
@@ -38,6 +41,12 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     // Initialize the original image bytes
     originalImageBytes =
         Uint8List.fromList(img.encodePng(widget.mergedFourImage));
+    loadFrameImage();
+  }
+
+  Future<void> loadFrameImage() async {
+    ByteData frameData = await rootBundle.load('assets/frame.png');
+    frame = img.decodeImage(frameData.buffer.asUint8List())!;
   }
 
   Future<String> createImageFile(Uint8List imageBytes) async {
@@ -54,18 +63,18 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   // Function to apply frame color to the image
   img.Image applyFrameColor(img.Image baseImage, Color frameColor) {
     // Create a new image with padding for the frame
-    final int frameWidth = 20; // Set frame width
+    // final int gap = 62; // Set frame width
+    // final int margin = 81;
     final img.Image framedImage = img.Image(
-      baseImage.width + 2 * frameWidth,
-      baseImage.height + 2 * frameWidth,
+      baseImage.width,
+      baseImage.height,
     );
 
     // Fill the frame area with the selected color
     img.fill(framedImage,
         img.getColor(frameColor.red, frameColor.green, frameColor.blue));
 
-    // Copy the original image onto the framed image
-    img.copyInto(framedImage, baseImage, dstX: frameWidth, dstY: frameWidth);
+    img.copyInto(framedImage, baseImage, dstX: 0, dstY: 0);
 
     return framedImage;
   }
@@ -185,7 +194,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Color> frameColors = [
-      const Color.fromARGB(255, 171, 39, 52),
+      const Color.fromARGB(255, 186, 12, 47),
       const Color.fromARGB(255, 255, 200, 221),
       const Color.fromARGB(255, 255, 175, 204),
       const Color.fromARGB(255, 255, 173, 173),
@@ -253,36 +262,37 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
               ),
             ),
             SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28.0),
-              child: Wrap(
-                spacing: 8.0,
-                runSpacing: 16.0,
-                children: frameColors.map((color) {
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        selectedFrameColor = color;
-                      });
-                    },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: selectedFrameColor == color
-                              ? Colors.grey[900]!
-                              : Colors.transparent,
-                          width: 4,
+            if (!widget.isSpecialFrame)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                child: Wrap(
+                  spacing: 8.0,
+                  runSpacing: 16.0,
+                  children: frameColors.map((color) {
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedFrameColor = color;
+                        });
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: selectedFrameColor == color
+                                ? Colors.grey[900]!
+                                : Colors.transparent,
+                            width: 4,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }).toList(),
+                    );
+                  }).toList(),
+                ),
               ),
-            ),
             SizedBox(height: 120),
           ],
         ),

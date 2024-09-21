@@ -12,12 +12,14 @@ import 'package:http/http.dart' as http;
 class CameraScreen extends StatefulWidget {
   final List<String> overlayImages;
   final bool isBasicFrame;
+  final bool isSpecialFrame;
   final String grid;
 
   const CameraScreen({
     super.key,
     required this.overlayImages,
     required this.isBasicFrame,
+    required this.isSpecialFrame,
     required this.grid,
   });
 
@@ -35,6 +37,7 @@ class _CameraScreenState extends State<CameraScreen>
   int overlayIndex = 0;
   img.Image logoImage = img.Image(0, 0);
   img.Image duplicatedLogoImage = img.Image(0, 0);
+  img.Image frame = img.Image(0, 0);
 
   Timer? _timer; // Timer object for countdown
   int _countdown = 7; // Countdown start value
@@ -50,6 +53,7 @@ class _CameraScreenState extends State<CameraScreen>
     super.initState();
     initCamera();
     loadLogoImage();
+    loadFrameImage();
 
     // Initialize the flash animation controller
     _flashController = AnimationController(
@@ -79,6 +83,11 @@ class _CameraScreenState extends State<CameraScreen>
     img.copyInto(duplicatedLogoImage, logoImage, dstX: 0, dstY: 0);
     img.copyInto(duplicatedLogoImage, logoImage,
         dstX: duplicatedLogoWidth - logoImage.width, dstY: 0);
+  }
+
+  Future<void> loadFrameImage() async {
+    ByteData frameData = await rootBundle.load('assets/frame_special_1.png');
+    frame = img.decodeImage(frameData.buffer.asUint8List())!;
   }
 
   Future<void> initCamera() async {
@@ -183,6 +192,7 @@ class _CameraScreenState extends State<CameraScreen>
             MaterialPageRoute(
               builder: (context) => DisplayPictureScreen(
                 mergedFourImage: mergedFourImage,
+                isSpecialFrame: widget.isSpecialFrame,
                 context: context,
               ),
             ),
@@ -456,7 +466,8 @@ class _CameraScreenState extends State<CameraScreen>
     }
 
     if (grid == '2x2') {
-      int gap = 60; // Gap between images
+      int gap = 62; // Gap between images
+      int margin = 81; // Margin around the images
 
       // Resize images to fit in a 2x2 grid without cropping
       int maxWidth =
@@ -470,8 +481,10 @@ class _CameraScreenState extends State<CameraScreen>
       }).toList();
 
       // Define the size of the final image based on resized dimensions and gaps
-      int width = (maxWidth * 2) + (3 * gap); // Two images wide plus gaps
-      int height = (maxHeight * 2) + (3 * gap) + 20;
+      int width =
+          (maxWidth * 2) + gap + (2 * margin); // Two images wide plus gap
+      int height =
+          (maxHeight * 2) + gap + (2 * margin); // Two images tall plus gap
 
       // Create the base image for the 2x2 grid
       img.Image mergedFourImage = img.Image(width, height + 360);
@@ -483,9 +496,15 @@ class _CameraScreenState extends State<CameraScreen>
         img.copyInto(mergedFourImage, images[i], dstX: offsetX, dstY: offsetY);
       }
 
-      img.copyInto(mergedFourImage, duplicatedLogoImage,
-          dstX: (mergedFourImage.width - duplicatedLogoImage.width) ~/ 2,
-          dstY: mergedFourImage.height - duplicatedLogoImage.height - 120);
+      if (widget.isSpecialFrame) {
+        img.copyInto(mergedFourImage, frame,
+            dstX: (mergedFourImage.width - frame.width) ~/ 2,
+            dstY: (mergedFourImage.height - frame.height) ~/ 2);
+      } else {
+        img.copyInto(mergedFourImage, duplicatedLogoImage,
+            dstX: (mergedFourImage.width - duplicatedLogoImage.width) ~/ 2,
+            dstY: mergedFourImage.height - duplicatedLogoImage.height - 120);
+      }
 
       return mergedFourImage;
     } else if (grid == '4x1') {
@@ -513,6 +532,7 @@ class _CameraScreenState extends State<CameraScreen>
       img.copyInto(mergedFourImage, duplicatedLogoImage,
           dstX: (mergedFourImage.width - duplicatedLogoImage.width) ~/ 2,
           dstY: mergedFourImage.height - duplicatedLogoImage.height - 120);
+
       return mergedFourImage;
     } else {
       return img.Image(0, 0);
