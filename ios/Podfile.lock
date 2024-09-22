@@ -6,9 +6,64 @@ PODS:
   - BSImageView (1.0.3)
   - camera_avfoundation (0.0.1):
     - Flutter
+  - cloud_functions (5.1.2):
+    - Firebase/Functions (= 11.0.0)
+    - firebase_core
+    - Flutter
+  - Firebase/CoreOnly (11.0.0):
+    - FirebaseCore (= 11.0.0)
+  - Firebase/Functions (11.0.0):
+    - Firebase/CoreOnly
+    - FirebaseFunctions (~> 11.0.0)
+  - Firebase/Storage (11.0.0):
+    - Firebase/CoreOnly
+    - FirebaseStorage (~> 11.0.0)
+  - firebase_core (3.5.0):
+    - Firebase/CoreOnly (= 11.0.0)
+    - Flutter
+  - firebase_storage (12.3.1):
+    - Firebase/Storage (= 11.0.0)
+    - firebase_core
+    - Flutter
+  - FirebaseAppCheckInterop (11.2.0)
+  - FirebaseAuthInterop (11.2.0)
+  - FirebaseCore (11.0.0):
+    - FirebaseCoreInternal (~> 11.0)
+    - GoogleUtilities/Environment (~> 8.0)
+    - GoogleUtilities/Logger (~> 8.0)
+  - FirebaseCoreExtension (11.2.0):
+    - FirebaseCore (~> 11.0)
+  - FirebaseCoreInternal (11.2.0):
+    - "GoogleUtilities/NSData+zlib (~> 8.0)"
+  - FirebaseFunctions (11.0.0):
+    - FirebaseAppCheckInterop (~> 11.0)
+    - FirebaseAuthInterop (~> 11.0)
+    - FirebaseCore (~> 11.0)
+    - FirebaseCoreExtension (~> 11.0)
+    - FirebaseMessagingInterop (~> 11.0)
+    - FirebaseSharedSwift (~> 11.0)
+    - GTMSessionFetcher/Core (~> 3.4)
+  - FirebaseMessagingInterop (11.2.0)
+  - FirebaseSharedSwift (11.2.0)
+  - FirebaseStorage (11.0.0):
+    - FirebaseAppCheckInterop (~> 11.0)
+    - FirebaseAuthInterop (~> 11.0)
+    - FirebaseCore (~> 11.0)
+    - FirebaseCoreExtension (~> 11.0)
+    - GoogleUtilities/Environment (~> 8.0)
+    - GTMSessionFetcher/Core (~> 3.4)
   - Flutter (1.0.0)
   - flutter_native_splash (0.0.1):
     - Flutter
+  - GoogleUtilities/Environment (8.0.2):
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Logger (8.0.2):
+    - GoogleUtilities/Environment
+    - GoogleUtilities/Privacy
+  - "GoogleUtilities/NSData+zlib (8.0.2)":
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Privacy (8.0.2)
+  - GTMSessionFetcher/Core (3.5.0)
   - image_gallery_saver (1.5.0):
     - Flutter
   - image_picker_ios (0.0.1):
@@ -32,6 +87,9 @@ PODS:
 
 DEPENDENCIES:
   - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
+  - cloud_functions (from `.symlinks/plugins/cloud_functions/ios`)
+  - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
+  - firebase_storage (from `.symlinks/plugins/firebase_storage/ios`)
   - Flutter (from `Flutter`)
   - flutter_native_splash (from `.symlinks/plugins/flutter_native_splash/ios`)
   - image_gallery_saver (from `.symlinks/plugins/image_gallery_saver/ios`)
@@ -49,10 +107,28 @@ SPEC REPOS:
     - BSGridCollectionViewLayout
     - BSImagePicker
     - BSImageView
+    - Firebase
+    - FirebaseAppCheckInterop
+    - FirebaseAuthInterop
+    - FirebaseCore
+    - FirebaseCoreExtension
+    - FirebaseCoreInternal
+    - FirebaseFunctions
+    - FirebaseMessagingInterop
+    - FirebaseSharedSwift
+    - FirebaseStorage
+    - GoogleUtilities
+    - GTMSessionFetcher
 
 EXTERNAL SOURCES:
   camera_avfoundation:
     :path: ".symlinks/plugins/camera_avfoundation/ios"
+  cloud_functions:
+    :path: ".symlinks/plugins/cloud_functions/ios"
+  firebase_core:
+    :path: ".symlinks/plugins/firebase_core/ios"
+  firebase_storage:
+    :path: ".symlinks/plugins/firebase_storage/ios"
   Flutter:
     :path: Flutter
   flutter_native_splash:
@@ -81,8 +157,23 @@ SPEC CHECKSUMS:
   BSImagePicker: 07404254f2fcdaf5a2eb403c0f8c337267ce8738
   BSImageView: a149459433a2687157d034c78e059d30ac7f2544
   camera_avfoundation: 759172d1a77ae7be0de08fc104cfb79738b8a59e
+  cloud_functions: 167c9f94438de5c039036675878d9da3889f5d8f
+  Firebase: 9f574c08c2396885b5e7e100ed4293d956218af9
+  firebase_core: 2ec6b789859c7c24766344ec71fdf78639402d56
+  firebase_storage: 9e484b4e90a239066e535a2ee2b6d662b140372b
+  FirebaseAppCheckInterop: ea21450529cf0ebd132788dd8916a0269abc684f
+  FirebaseAuthInterop: 47c09558af5d1b31f16fb352387c72d4804f4a24
+  FirebaseCore: 3cf438f431f18c12cdf2aaf64434648b63f7e383
+  FirebaseCoreExtension: cda74ddfb001224bd8fd1d6e74698b4ed07803de
+  FirebaseCoreInternal: 0c569513412da9f3b31bd0b340013bbee8f295c5
+  FirebaseFunctions: 49653511d8c966ad16c5c02acc2bfd642ef1cec1
+  FirebaseMessagingInterop: 2bf06fae2d15b77b8e4ca872241f90e2c6285ef3
+  FirebaseSharedSwift: 7a0d78d155ede78407f0fdc89fbc914014c7c540
+  FirebaseStorage: f9e2bf027d549db18b6195a37b31c85f56e40200
   Flutter: e0871f40cf51350855a761d2e70bf5af5b9b5de7
   flutter_native_splash: 52501b97d1c0a5f898d687f1646226c1f93c56ef
+  GoogleUtilities: 26a3abef001b6533cf678d3eb38fd3f614b7872d
+  GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   image_gallery_saver: 259eab68fb271cfd57d599904f7acdc7832e7ef2
   image_picker_ios: c560581cceedb403a6ff17f2f816d7fea1421fc1
   local_rembg: c8472adbe967b6f550fddd6241c738c0a4783211
@@ -95,4 +186,4 @@ SPEC CHECKSUMS:
 
 PODFILE CHECKSUM: f393a3e970b6bcad3ccd24fdc079653b90c459b1
 
-COCOAPODS: 1.11.3
+COCOAPODS: 1.15.2

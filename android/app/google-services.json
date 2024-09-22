@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "486125655456",
+    "project_id": "snapit-1a07d",
+    "storage_bucket": "snapit-1a07d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:486125655456:android:f8b34cb2ef3cd62bdd40c5",
+        "android_client_info": {
+          "package_name": "com.manyongteam.snapit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCnoofPHG5RK4qtNh3TynqiFGFpfOxyYyw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
