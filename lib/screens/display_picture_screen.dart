@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +13,7 @@ import 'package:image/image.dart' as img;
 import 'package:flutter/cupertino.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class DisplayPictureScreen extends StatefulWidget {
   final img.Image mergedFourImage;
@@ -22,6 +21,7 @@ class DisplayPictureScreen extends StatefulWidget {
   final String appId;
 
   DisplayPictureScreen({
+    super.key,
     required this.mergedFourImage,
     required this.isSpecialFrame,
     required BuildContext context,
@@ -32,7 +32,7 @@ class DisplayPictureScreen extends StatefulWidget {
 }
 
 class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
-  Color selectedFrameColor = Color.fromARGB(255, 171, 39, 52);
+  Color selectedFrameColor = const Color.fromARGB(255, 171, 39, 52);
   late Uint8List originalImageBytes; // Store the original image bytes
   bool isLoading = false;
   img.Image frame = img.Image(0, 0);
@@ -92,10 +92,12 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
       print('Image saved to gallery: $result');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Image Saved', style: TextStyle(color: Colors.black)),
+          content:
+              const Text('Image Saved', style: TextStyle(color: Colors.black)),
           backgroundColor: Colors.white,
           behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.only(top: 10, left: 10, right: 10, bottom: 10),
+          margin:
+              const EdgeInsets.only(top: 10, left: 10, right: 10, bottom: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -106,31 +108,114 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     }
   }
 
-  Future<void> saveImageToFirebaseStorage() async {
-    String imageFilePath = await createImageFile(originalImageBytes);
-    final File imageFile = File(imageFilePath);
-    try {
-      final Uint8List imageBytes = await imageFile.readAsBytesSync();
-      final storageRef = FirebaseStorage.instance.ref();
-      final imageRef = storageRef
-          .child("4cuts/${DateTime.now().millisecondsSinceEpoch}.png");
-      //메타데이터를 설정해 Firebase에서 파일의 유형을 알 수 있도록 함
-      final metadata = SettableMetadata(contentType: 'image/png');
-      await imageRef.putData(imageBytes,metadata);
-      final downloadUrl = await imageRef.getDownloadURL();
-      print('Image saved to Firebase Storage: ${downloadUrl}');
+  bool _isDialogShowing = false;  // 다이얼로그 중복 방지 플래그
 
-      // _showQRCodeDialog(downloadUrl);
-    } catch (e) {
-      print('Error saving image to Firebase Storage: $e');
+  void showLoadingIndicator(BuildContext context) {
+    if (!_isDialogShowing) {
+      _isDialogShowing = true;  // 다이얼로그가 이미 표시 중인지 플래그로 체크
+      showDialog(
+        context: context,
+        barrierDismissible: false, // 사용자가 뒤를 클릭해도 닫히지 않도록 설정
+        builder: (BuildContext context) {
+          return Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          );
+        },
+      );
     }
   }
 
-  // void showQRCodeModal(BuildContext context, String downloadUrl) {
-  //   showDialog(
+  void hideLoadingIndicator(BuildContext context) {
+    if (_isDialogShowing && mounted) {
+      _isDialogShowing = false;  // 다이얼로그 표시 상태 해제
+      Navigator.of(context, rootNavigator: true).pop();  // 다이얼로그 닫기
+    }
+  }
 
-  //   )
-  // }
+  Future<void> saveImageToFirebaseStorage(BuildContext context) async {
+    String imageFilePath = await createImageFile(originalImageBytes);
+    String? downloadUrl;
+    try {
+      showLoadingIndicator(context);  // 로딩 인디케이터 표시
+
+      // 비동기 파일 읽기
+      final File imageFile = File(imageFilePath);
+      final Uint8List imageBytes = await imageFile.readAsBytes();
+
+      // Firebase Storage 참조 및 파일 업로드
+      final storageRef = FirebaseStorage.instance.ref();
+      final imageRef = storageRef.child("4cuts/${DateTime.now().millisecondsSinceEpoch}.png");
+
+      // 메타데이터 설정
+      final metadata = SettableMetadata(contentType: 'image/png');
+      await imageRef.putData(imageBytes, metadata);
+
+      // 다운로드 URL 가져오기
+      downloadUrl = await imageRef.getDownloadURL();
+      print('Image saved to Firebase Storage: $downloadUrl');
+
+      // QR 코드 모달 표시 (업로드 성공 시에만)
+      if (downloadUrl != null) {
+        hideLoadingIndicator(context);
+        _showQRCodeModal(context, downloadUrl);
+      }
+    } catch (e) {
+      print('Error saving image to Firebase Storage: $e');
+    } finally {
+      hideLoadingIndicator(context);  // 항상 로딩 인디케이터를 숨김
+    }
+  }
+
+
+  void _showQRCodeModal(BuildContext context, String downloadUrl) {
+    showCupertinoDialog(
+      context: context,
+      barrierDismissible: true, // 창 밖을 눌렀을 때 모달을 닫을 수 있도록 설정
+      builder: (BuildContext context) {
+        return CupertinoAlertDialog(
+          title: const Padding(
+            padding: EdgeInsets.only(bottom: 10),
+            child: Text(
+              'Download Image with QR Code',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              SizedBox(
+                // 명시적으로 크기를 설정
+                width: 150,
+                height: 150,
+                child: QrImageView(
+                  data: downloadUrl, // QR 코드에 다운로드 링크 삽입
+                  version: QrVersions.auto,
+                  gapless: false,
+                  backgroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            CupertinoDialogAction(
+              onPressed: () {
+                Navigator.of(context).pop(); // 모달 닫기
+              },
+              textStyle: const TextStyle(color: Colors.blue),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> checkAndShareImageToInstagramStory() async {
     const instagramUrl = 'instagram://app';
@@ -147,17 +232,17 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Instagram Not Installed'),
-          content: Text('Install Instagram to share your story?'),
+          title: const Text('Instagram Not Installed'),
+          content: const Text('Install Instagram to share your story?'),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text('Install'),
+              child: const Text('Install'),
               onPressed: () {
                 launch('https://apps.apple.com/us/app/instagram/id389801252');
               },
@@ -192,7 +277,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     final XFile xFile = XFile(tempFile.path);
 
     Share.shareXFiles([xFile],
-        sharePositionOrigin: Rect.fromLTWH(0, 0, 1, 1),
+        sharePositionOrigin: const Rect.fromLTWH(0, 0, 1, 1),
         subject: widget.appId,
         text: 'SnapIT!');
   }
@@ -201,17 +286,17 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     return (await showCupertinoDialog(
           context: context,
           builder: (context) => CupertinoAlertDialog(
-            title: Text('Do you want to exit?'),
+            title: const Text('Do you want to exit?'),
             actions: <Widget>[
               CupertinoDialogAction(
                 onPressed: () => Navigator.of(context).pop(false),
-                textStyle: TextStyle(color: Colors.blue),
-                child: Text('No'),
+                textStyle: const TextStyle(color: Colors.blue),
+                child: const Text('No'),
               ),
               CupertinoDialogAction(
                 onPressed: () => Navigator.of(context).pop(true),
-                textStyle: TextStyle(color: Colors.blue),
-                child: Text('Yes'),
+                textStyle: const TextStyle(color: Colors.blue),
+                child: const Text('Yes'),
               ),
             ],
           ),
@@ -245,7 +330,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.close,
               color: Colors.white,
               size: 28,
@@ -269,18 +354,19 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            SizedBox(height: 40),
+            const SizedBox(height: 40),
             Flexible(
               flex: 3,
               child: Center(
                 child: isLoading
-                    ? Text('Loading...',
+                    ? const Text('Loading...',
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: 24,
                             fontFamily: 'Roboto'))
                     : Container(
-                        padding: EdgeInsets.all(2), // Padding for the frame
+                        padding:
+                            const EdgeInsets.all(2), // Padding for the frame
                         color: selectedFrameColor, // Frame color
                         child: Image.memory(
                           originalImageBytes,
@@ -289,7 +375,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
                       ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             if (!widget.isSpecialFrame)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 28.0),
@@ -321,7 +407,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
                   }).toList(),
                 ),
               ),
-            SizedBox(height: 120),
+            const SizedBox(height: 120),
           ],
         ),
       ),
@@ -338,7 +424,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             child: FloatingActionButton(
               backgroundColor: Colors.transparent,
               onPressed: saveImageToGallery,
-              child: Icon(
+              child: const Icon(
                 Icons.download,
                 color: Colors.white,
                 size: 28,
@@ -370,7 +456,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             child: FloatingActionButton(
               backgroundColor: Colors.transparent,
               onPressed: shareImage,
-              child: Icon(
+              child: const Icon(
                 Icons.share,
                 color: Colors.white,
                 size: 28,
@@ -385,9 +471,11 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             ),
             child: FloatingActionButton(
               backgroundColor: Colors.transparent,
-              onPressed: saveImageToFirebaseStorage,
-              child: Icon(
-                Icons.cloud_upload,
+              onPressed: () async {
+                await saveImageToFirebaseStorage(context); // 비동기 함수를 호출
+              },
+              child: const Icon(
+                Icons.qr_code,
                 color: Colors.white,
                 size: 28,
               ),
