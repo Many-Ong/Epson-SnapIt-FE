@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:snapit/screens/home_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   try {
     await dotenv.load(fileName: ".env");
@@ -31,7 +36,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark().copyWith(
         //기존 속성 유지하며 폰트만 추가
         textTheme: ThemeData.dark().textTheme.apply(
-              fontFamily:'Pretendard',
+              fontFamily: 'Pretendard',
             ),
       ),
       home: HomeScreen(

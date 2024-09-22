@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
@@ -103,6 +105,32 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
       print('Permission denied');
     }
   }
+
+  Future<void> saveImageToFirebaseStorage() async {
+    String imageFilePath = await createImageFile(originalImageBytes);
+    final File imageFile = File(imageFilePath);
+    try {
+      final Uint8List imageBytes = await imageFile.readAsBytesSync();
+      final storageRef = FirebaseStorage.instance.ref();
+      final imageRef = storageRef
+          .child("4cuts/${DateTime.now().millisecondsSinceEpoch}.png");
+      //메타데이터를 설정해 Firebase에서 파일의 유형을 알 수 있도록 함
+      final metadata = SettableMetadata(contentType: 'image/png');
+      await imageRef.putData(imageBytes,metadata);
+      final downloadUrl = await imageRef.getDownloadURL();
+      print('Image saved to Firebase Storage: ${downloadUrl}');
+
+      // _showQRCodeDialog(downloadUrl);
+    } catch (e) {
+      print('Error saving image to Firebase Storage: $e');
+    }
+  }
+
+  // void showQRCodeModal(BuildContext context, String downloadUrl) {
+  //   showDialog(
+
+  //   )
+  // }
 
   Future<void> checkAndShareImageToInstagramStory() async {
     const instagramUrl = 'instagram://app';
@@ -344,6 +372,22 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
               onPressed: shareImage,
               child: Icon(
                 Icons.share,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white, width: 3),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: FloatingActionButton(
+              backgroundColor: Colors.transparent,
+              onPressed: saveImageToFirebaseStorage,
+              child: Icon(
+                Icons.cloud_upload,
                 color: Colors.white,
                 size: 28,
               ),
