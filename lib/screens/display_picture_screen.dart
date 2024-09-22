@@ -127,15 +127,15 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   }
 
 void _showQRCodeModal(BuildContext context, String downloadUrl) {
-  showDialog(
+  showCupertinoDialog(
     context: context,
     barrierDismissible: true, // 창 밖을 눌렀을 때 모달을 닫을 수 있도록 설정
     builder: (BuildContext context) {
-      return AlertDialog(
+      return CupertinoAlertDialog(
         title: const Padding(
           padding: EdgeInsets.only(bottom: 10),
           child: Text(
-            'Download Image with QR Code',
+            'Download Image with\nQR Code',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
@@ -148,22 +148,24 @@ void _showQRCodeModal(BuildContext context, String downloadUrl) {
           children: [
             const SizedBox(height: 10),
             SizedBox(  // 명시적으로 크기를 설정
-              width: 200,
-              height: 200,
+              width: 150,
+              height: 150,
               child: QrImageView(
                 data: downloadUrl, // QR 코드에 다운로드 링크 삽입
                 version: QrVersions.auto,
                 gapless: false,
+                backgroundColor: Colors.white,
               ),
             ),
           ],
         ),
         actions: <Widget>[
-          TextButton(
+          CupertinoDialogAction(
             onPressed: () {
               Navigator.of(context).pop(); // 모달 닫기
             },
-            child: Text('Close'),
+            textStyle: const TextStyle(color: Colors.blue),
+            child: const Text('Close'),
           ),
         ],
       );
