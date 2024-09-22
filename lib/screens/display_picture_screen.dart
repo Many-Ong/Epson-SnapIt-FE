@@ -475,7 +475,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
                 await saveImageToFirebaseStorage(context); // 비동기 함수를 호출
               },
               child: const Icon(
-                Icons.cloud_upload,
+                Icons.qr_code,
                 color: Colors.white,
                 size: 28,
               ),
