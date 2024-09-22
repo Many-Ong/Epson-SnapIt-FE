@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,13 +13,14 @@ import 'package:image/image.dart' as img;
 import 'package:flutter/cupertino.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:url_launcher/url_launcher_string.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class DisplayPictureScreen extends StatefulWidget {
   final img.Image mergedFourImage;
   final bool isSpecialFrame;
   final String appId;
 
-  DisplayPictureScreen({
+  DisplayPictureScreen({super.key, 
     required this.mergedFourImage,
     required this.isSpecialFrame,
     required BuildContext context,
@@ -32,7 +31,7 @@ class DisplayPictureScreen extends StatefulWidget {
 }
 
 class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
-  Color selectedFrameColor = Color.fromARGB(255, 171, 39, 52);
+  Color selectedFrameColor = const Color.fromARGB(255, 171, 39, 52);
   late Uint8List originalImageBytes; // Store the original image bytes
   bool isLoading = false;
   img.Image frame = img.Image(0, 0);
@@ -92,10 +91,10 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
       print('Image saved to gallery: $result');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Image Saved', style: TextStyle(color: Colors.black)),
+          content: const Text('Image Saved', style: TextStyle(color: Colors.black)),
           backgroundColor: Colors.white,
           behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.only(top: 10, left: 10, right: 10, bottom: 10),
+          margin: const EdgeInsets.only(top: 10, left: 10, right: 10, bottom: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -110,7 +109,8 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     String imageFilePath = await createImageFile(originalImageBytes);
     final File imageFile = File(imageFilePath);
     try {
-      final Uint8List imageBytes = await imageFile.readAsBytesSync();
+      //showLoadingIndicator(context);
+      final Uint8List imageBytes = imageFile.readAsBytesSync();
       final storageRef = FirebaseStorage.instance.ref();
       final imageRef = storageRef
           .child("4cuts/${DateTime.now().millisecondsSinceEpoch}.png");
@@ -118,19 +118,60 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
       final metadata = SettableMetadata(contentType: 'image/png');
       await imageRef.putData(imageBytes,metadata);
       final downloadUrl = await imageRef.getDownloadURL();
-      print('Image saved to Firebase Storage: ${downloadUrl}');
-
-      // _showQRCodeDialog(downloadUrl);
+      print('Image saved to Firebase Storage: $downloadUrl');
+      //hideLoadingIndicator(context);
+      _showQRCodeModal(context, downloadUrl);
     } catch (e) {
       print('Error saving image to Firebase Storage: $e');
     }
   }
 
-  // void showQRCodeModal(BuildContext context, String downloadUrl) {
-  //   showDialog(
+void _showQRCodeModal(BuildContext context, String downloadUrl) {
+  showDialog(
+    context: context,
+    barrierDismissible: true, // 창 밖을 눌렀을 때 모달을 닫을 수 있도록 설정
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Padding(
+          padding: EdgeInsets.only(bottom: 10),
+          child: Text(
+            'Download Image with QR Code',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            SizedBox(  // 명시적으로 크기를 설정
+              width: 200,
+              height: 200,
+              child: QrImageView(
+                data: downloadUrl, // QR 코드에 다운로드 링크 삽입
+                version: QrVersions.auto,
+                gapless: false,
+              ),
+            ),
+          ],
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // 모달 닫기
+            },
+            child: Text('Close'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
-  //   )
-  // }
+
 
   Future<void> checkAndShareImageToInstagramStory() async {
     const instagramUrl = 'instagram://app';
@@ -147,17 +188,17 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Instagram Not Installed'),
-          content: Text('Install Instagram to share your story?'),
+          title: const Text('Instagram Not Installed'),
+          content: const Text('Install Instagram to share your story?'),
           actions: <Widget>[
             TextButton(
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text('Install'),
+              child: const Text('Install'),
               onPressed: () {
                 launch('https://apps.apple.com/us/app/instagram/id389801252');
               },
@@ -192,7 +233,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     final XFile xFile = XFile(tempFile.path);
 
     Share.shareXFiles([xFile],
-        sharePositionOrigin: Rect.fromLTWH(0, 0, 1, 1),
+        sharePositionOrigin: const Rect.fromLTWH(0, 0, 1, 1),
         subject: widget.appId,
         text: 'SnapIT!');
   }
@@ -201,17 +242,17 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     return (await showCupertinoDialog(
           context: context,
           builder: (context) => CupertinoAlertDialog(
-            title: Text('Do you want to exit?'),
+            title: const Text('Do you want to exit?'),
             actions: <Widget>[
               CupertinoDialogAction(
                 onPressed: () => Navigator.of(context).pop(false),
-                textStyle: TextStyle(color: Colors.blue),
-                child: Text('No'),
+                textStyle: const TextStyle(color: Colors.blue),
+                child: const Text('No'),
               ),
               CupertinoDialogAction(
                 onPressed: () => Navigator.of(context).pop(true),
-                textStyle: TextStyle(color: Colors.blue),
-                child: Text('Yes'),
+                textStyle: const TextStyle(color: Colors.blue),
+                child: const Text('Yes'),
               ),
             ],
           ),
@@ -245,7 +286,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.close,
               color: Colors.white,
               size: 28,
@@ -269,18 +310,18 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            SizedBox(height: 40),
+            const SizedBox(height: 40),
             Flexible(
               flex: 3,
               child: Center(
                 child: isLoading
-                    ? Text('Loading...',
+                    ? const Text('Loading...',
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: 24,
                             fontFamily: 'Roboto'))
                     : Container(
-                        padding: EdgeInsets.all(2), // Padding for the frame
+                        padding: const EdgeInsets.all(2), // Padding for the frame
                         color: selectedFrameColor, // Frame color
                         child: Image.memory(
                           originalImageBytes,
@@ -289,7 +330,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
                       ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             if (!widget.isSpecialFrame)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 28.0),
@@ -321,7 +362,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
                   }).toList(),
                 ),
               ),
-            SizedBox(height: 120),
+            const SizedBox(height: 120),
           ],
         ),
       ),
@@ -338,7 +379,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             child: FloatingActionButton(
               backgroundColor: Colors.transparent,
               onPressed: saveImageToGallery,
-              child: Icon(
+              child: const Icon(
                 Icons.download,
                 color: Colors.white,
                 size: 28,
@@ -370,7 +411,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             child: FloatingActionButton(
               backgroundColor: Colors.transparent,
               onPressed: shareImage,
-              child: Icon(
+              child: const Icon(
                 Icons.share,
                 color: Colors.white,
                 size: 28,
@@ -386,7 +427,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             child: FloatingActionButton(
               backgroundColor: Colors.transparent,
               onPressed: saveImageToFirebaseStorage,
-              child: Icon(
+              child: const Icon(
                 Icons.cloud_upload,
                 color: Colors.white,
                 size: 28,
