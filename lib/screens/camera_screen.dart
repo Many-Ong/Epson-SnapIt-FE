@@ -40,7 +40,7 @@ class _CameraScreenState extends State<CameraScreen>
   img.Image frame = img.Image(0, 0);
 
   Timer? _timer; // Timer object for countdown
-  int _countdown = 7; // Countdown start value
+  int _countdown = 5; // Countdown start value
   bool isShowingTakenPhoto = false; // Flag to show the taken photo
   bool isFlashing = false; // Flag for flash effect
 
@@ -140,7 +140,7 @@ class _CameraScreenState extends State<CameraScreen>
   void resetTimer() {
     _timer?.cancel();
     setState(() {
-      _countdown = 7;
+      _countdown = 5;
     });
   }
 
