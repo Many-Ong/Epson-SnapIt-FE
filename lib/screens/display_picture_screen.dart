@@ -32,7 +32,7 @@ class DisplayPictureScreen extends StatefulWidget {
 }
 
 class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
-  Color selectedFrameColor = const Color.fromARGB(255, 255, 255, 255);
+  Color selectedFrameColor = Colors.white;
   late Uint8List originalImageBytes; // Store the original image bytes
   bool isLoading = false;
   img.Image frame = img.Image(0, 0);
@@ -47,26 +47,32 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   }
 
   Future<void> loadFrameImage() async {
-    ByteData frameData = await rootBundle.load('assets/frame.png');
+    ByteData frameData = await rootBundle.load('assets/frame_special_1.png');
     frame = img.decodeImage(frameData.buffer.asUint8List())!;
   }
 
   Future<String> createImageFile(Uint8List imageBytes) async {
     // Create the framed image with the selected frame color
-    // final framedImage =
-    //     applyFrameColor(widget.mergedFourImage, selectedFrameColor);
+
+    if (widget.isSpecialFrame) {
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = await File('${tempDir.path}/temp_image.png').create();
+      await tempFile.writeAsBytes(img.encodePng(widget.mergedFourImage));
+      return tempFile.path;
+    }
+
+    final framedImage =
+        applyFrameColor(widget.mergedFourImage, selectedFrameColor);
 
     final tempDir = await getTemporaryDirectory();
     final tempFile = await File('${tempDir.path}/temp_image.png').create();
-    await tempFile.writeAsBytes(img.encodePng(widget.mergedFourImage));
+    await tempFile.writeAsBytes(img.encodePng(framedImage));
     return tempFile.path;
   }
 
   // Function to apply frame color to the image
   img.Image applyFrameColor(img.Image baseImage, Color frameColor) {
     // Create a new image with padding for the frame
-    // final int gap = 62; // Set frame width
-    // final int margin = 81;
     final img.Image framedImage = img.Image(
       baseImage.width,
       baseImage.height,
@@ -367,6 +373,9 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
                     : Container(
                         padding:
                             const EdgeInsets.all(2), // Padding for the frame
+                        color: widget.isSpecialFrame
+                            ? Colors.transparent
+                            : selectedFrameColor,
                         child: Image.memory(
                           originalImageBytes,
                           fit: BoxFit.cover,
