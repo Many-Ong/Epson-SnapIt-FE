@@ -367,7 +367,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
                     : Container(
                         padding:
                             const EdgeInsets.all(2), // Padding for the frame
-                        color: selectedFrameColor, // Frame color
                         child: Image.memory(
                           originalImageBytes,
                           fit: BoxFit.cover,

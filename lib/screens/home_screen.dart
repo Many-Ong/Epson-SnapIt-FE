@@ -40,9 +40,9 @@ class HomeScreen extends StatelessWidget {
             largeButton(
               context,
               "assets/select_special.png",
-              "Seoul Gimbap Special Frame",
-              "You can take 4-cut photos with Seoul Gimbap special frame",
-              Color.fromARGB(255, 187, 58, 55),
+              "Football Special Frame",
+              "You can take 4-cut photos with special frame",
+              Color.fromARGB(255, 46, 184, 49),
               () {
                 Navigator.push(
                   context,

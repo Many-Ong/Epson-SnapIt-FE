@@ -466,8 +466,8 @@ class _CameraScreenState extends State<CameraScreen>
     }
 
     if (grid == '2x2') {
-      int gap = 62; // Gap between images
-      int margin = 81; // Margin around the images
+      int gap = 80; // Gap between images
+      int margin = 60; // Margin around the images
 
       // Resize images to fit in a 2x2 grid without cropping
       int maxWidth =
@@ -487,12 +487,12 @@ class _CameraScreenState extends State<CameraScreen>
           (maxHeight * 2) + gap + (2 * margin); // Two images tall plus gap
 
       // Create the base image for the 2x2 grid
-      img.Image mergedFourImage = img.Image(width, height + 360);
+      img.Image mergedFourImage = img.Image(width, height + 356);
 
       // Place the images in a 2x2 grid
       for (int i = 0; i < images.length; i++) {
-        int offsetX = (i % 2) * (maxWidth + gap) + gap; // Column position
-        int offsetY = (i ~/ 2) * (maxHeight + gap) + gap; // Row position
+        int offsetX = (i % 2) * (maxWidth + gap) + margin; // Column position
+        int offsetY = (i ~/ 2) * (maxHeight + gap) + margin; // Row position
         img.copyInto(mergedFourImage, images[i], dstX: offsetX, dstY: offsetY);
       }
 
