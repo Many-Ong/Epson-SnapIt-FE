@@ -32,7 +32,7 @@ class DisplayPictureScreen extends StatefulWidget {
 }
 
 class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
-  Color selectedFrameColor = const Color.fromARGB(255, 171, 39, 52);
+  Color selectedFrameColor = const Color.fromARGB(255, 255, 255, 255);
   late Uint8List originalImageBytes; // Store the original image bytes
   bool isLoading = false;
   img.Image frame = img.Image(0, 0);
@@ -53,12 +53,12 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
 
   Future<String> createImageFile(Uint8List imageBytes) async {
     // Create the framed image with the selected frame color
-    final framedImage =
-        applyFrameColor(widget.mergedFourImage, selectedFrameColor);
+    // final framedImage =
+    //     applyFrameColor(widget.mergedFourImage, selectedFrameColor);
 
     final tempDir = await getTemporaryDirectory();
     final tempFile = await File('${tempDir.path}/temp_image.png').create();
-    await tempFile.writeAsBytes(img.encodePng(framedImage));
+    await tempFile.writeAsBytes(img.encodePng(widget.mergedFourImage));
     return tempFile.path;
   }
 
@@ -108,11 +108,11 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     }
   }
 
-  bool _isDialogShowing = false;  // 다이얼로그 중복 방지 플래그
+  bool _isDialogShowing = false; // 다이얼로그 중복 방지 플래그
 
   void showLoadingIndicator(BuildContext context) {
     if (!_isDialogShowing) {
-      _isDialogShowing = true;  // 다이얼로그가 이미 표시 중인지 플래그로 체크
+      _isDialogShowing = true; // 다이얼로그가 이미 표시 중인지 플래그로 체크
       showDialog(
         context: context,
         barrierDismissible: false, // 사용자가 뒤를 클릭해도 닫히지 않도록 설정
@@ -129,8 +129,8 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
 
   void hideLoadingIndicator(BuildContext context) {
     if (_isDialogShowing && mounted) {
-      _isDialogShowing = false;  // 다이얼로그 표시 상태 해제
-      Navigator.of(context, rootNavigator: true).pop();  // 다이얼로그 닫기
+      _isDialogShowing = false; // 다이얼로그 표시 상태 해제
+      Navigator.of(context, rootNavigator: true).pop(); // 다이얼로그 닫기
     }
   }
 
@@ -138,7 +138,7 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     String imageFilePath = await createImageFile(originalImageBytes);
     String? downloadUrl;
     try {
-      showLoadingIndicator(context);  // 로딩 인디케이터 표시
+      showLoadingIndicator(context); // 로딩 인디케이터 표시
 
       // 비동기 파일 읽기
       final File imageFile = File(imageFilePath);
@@ -146,7 +146,8 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
 
       // Firebase Storage 참조 및 파일 업로드
       final storageRef = FirebaseStorage.instance.ref();
-      final imageRef = storageRef.child("4cuts/${DateTime.now().millisecondsSinceEpoch}.png");
+      final imageRef = storageRef
+          .child("4cuts/${DateTime.now().millisecondsSinceEpoch}.png");
 
       // 메타데이터 설정
       final metadata = SettableMetadata(contentType: 'image/png');
@@ -164,10 +165,9 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     } catch (e) {
       print('Error saving image to Firebase Storage: $e');
     } finally {
-      hideLoadingIndicator(context);  // 항상 로딩 인디케이터를 숨김
+      hideLoadingIndicator(context); // 항상 로딩 인디케이터를 숨김
     }
   }
-
 
   void _showQRCodeModal(BuildContext context, String downloadUrl) {
     showCupertinoDialog(
