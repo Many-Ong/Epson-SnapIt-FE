@@ -38,6 +38,8 @@ class _CameraScreenState extends State<CameraScreen>
   img.Image logoImage = img.Image(0, 0);
   img.Image duplicatedLogoImage = img.Image(0, 0);
   img.Image frame = img.Image(0, 0);
+  int selectedCameraIndex =
+      0; // Track selected camera (starts with front camera)
 
   Timer? _timer; // Timer object for countdown
   int _countdown = 5; // Countdown start value
@@ -51,7 +53,7 @@ class _CameraScreenState extends State<CameraScreen>
   @override
   void initState() {
     super.initState();
-    initCamera();
+    initCameras(); // Initialize available cameras
     loadLogoImage();
     loadFrameImage();
 
@@ -90,23 +92,35 @@ class _CameraScreenState extends State<CameraScreen>
     frame = img.decodeImage(frameData.buffer.asUint8List())!;
   }
 
-  Future<void> initCamera() async {
+  Future<void> initCameras() async {
     cameras = await availableCameras();
-    CameraDescription frontCamera = cameras.firstWhere(
-      (camera) => camera.lensDirection == CameraLensDirection.front,
-      orElse: () => cameras.first,
+    if (cameras.isNotEmpty) {
+      selectedCameraIndex = cameras.indexWhere(
+        (camera) => camera.lensDirection == CameraLensDirection.front,
+      );
+      initCamera(selectedCameraIndex);
+    }
+  }
+
+  Future<void> initCamera(int cameraIndex) async {
+    print('cameraIndex: $cameraIndex');
+    print('cameraLength: ${cameras.length}');
+    print('cameraLensDirection: ${cameras[cameraIndex].lensDirection}');
+    CameraDescription selectedCamera = cameras[cameraIndex];
+    _controller = CameraController(
+      selectedCamera,
+      ResolutionPreset.veryHigh,
+      enableAudio: false,
     );
-    _controller = CameraController(frontCamera, ResolutionPreset.veryHigh,
-        enableAudio: false);
-    _initializeControllerFuture = _controller.initialize().then((_) async {
-      if (!mounted) return;
-      await _controller.setExposureMode(ExposureMode.auto);
-      await _controller.setFlashMode(FlashMode.off);
-      setState(() {
+
+    setState(() {
+      _initializeControllerFuture = _controller.initialize().then((_) async {
+        if (!mounted) return;
+        await _controller.setExposureMode(ExposureMode.auto);
+        await _controller.setFlashMode(FlashMode.off);
+        resetTimer();
         startTimer(); // Start the timer when the camera is initialized
       });
-    }).catchError((error) {
-      print('Error initializing camera: $error');
     });
   }
 
@@ -148,7 +162,19 @@ class _CameraScreenState extends State<CameraScreen>
     try {
       await _initializeControllerFuture;
       if (pictureCount < 4) {
-        final XFile image = await _controller.takePicture();
+        XFile image = await _controller.takePicture();
+
+        // Flip the image horizontally if using the front camera
+        if (cameras[selectedCameraIndex].lensDirection ==
+            CameraLensDirection.front) {
+          img.Image flippedImage = img.flipHorizontal(
+            img.decodeImage(File(image.path).readAsBytesSync())!,
+          );
+          String flippedPath = '${image.path}_flipped.png';
+          File(flippedPath)..writeAsBytesSync(img.encodePng(flippedImage));
+          image = XFile(flippedPath); // Update image to use flipped image
+        }
+
         String takenPicture = widget.isBasicFrame
             ? await cropAndSaveImage(image)
             : await mergeImage(image, widget.overlayImages[overlayIndex]);
@@ -207,6 +233,15 @@ class _CameraScreenState extends State<CameraScreen>
     }
   }
 
+  // Method to toggle the camera between front and back
+  void toggleCamera() {
+    setState(() {
+      selectedCameraIndex = selectedCameraIndex == 0 ? 1 : 0;
+    });
+    initCamera(
+        selectedCameraIndex); // Reinitialize the camera with the new index
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -217,150 +252,171 @@ class _CameraScreenState extends State<CameraScreen>
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           )),
       backgroundColor: Colors.black,
-      body: FutureBuilder<void>(
-        future: _initializeControllerFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            return Stack(
-              children: <Widget>[
-                Center(
-                  heightFactor: 1,
-                  child: Text(
-                    isShowingTakenPhoto
-                        ? ''
-                        : '$_countdown', // Display the countdown
-                    style: TextStyle(color: Colors.white, fontSize: 60),
-                  ),
-                ),
-                if (isShowingTakenPhoto)
-                  // Show the last taken photo for 2 seconds
-                  if ((!widget.isBasicFrame || widget.grid == '4x1'))
-                    Positioned(
-                      top: -110,
-                      left: 0,
-                      right: 0,
-                      child: flutter.Image.file(
-                        File(takenPictures.last),
-                        fit: BoxFit.contain,
-                        width: MediaQuery.of(context).size.width,
-                        height: MediaQuery.of(context).size.height,
+      body: cameras.isNotEmpty
+          ? FutureBuilder<void>(
+              future: _initializeControllerFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  return Stack(
+                    children: <Widget>[
+                      Center(
+                        heightFactor: 1,
+                        child: Text(
+                          isShowingTakenPhoto
+                              ? ''
+                              : '$_countdown', // Display the countdown
+                          style: TextStyle(color: Colors.white, fontSize: 60),
+                        ),
                       ),
-                    ),
-                if (isShowingTakenPhoto)
-                  if (widget.isBasicFrame && widget.grid == '2x2')
-                    Center(
-                      heightFactor: 2,
-                      child: flutter.Image.file(
-                        File(takenPictures.last),
-                        fit: BoxFit.contain,
-                        width: MediaQuery.of(context).size.width,
-                        height: MediaQuery.of(context).size.height,
-                      ),
-                    ),
-                if (!isShowingTakenPhoto &&
-                    (!widget.isBasicFrame || widget.grid == '4x1'))
-                  Positioned(
-                    top: 160,
-                    left: 0,
-                    right: 0,
-                    child: AspectRatio(
-                      aspectRatio: 4 / 3,
-                      child: ClipRect(
-                        child: Transform.scale(
-                            scale: _controller.value.aspectRatio / 3 * 4,
-                            child: Center(
-                              child: CameraPreview(_controller),
-                            )),
-                      ),
-                    ),
-                  ),
-                if (!isShowingTakenPhoto && !widget.isBasicFrame)
-                  Center(
-                    heightFactor: 2,
-                    child: AspectRatio(
-                      aspectRatio: 4 / 3,
-                      child:
-                          widget.overlayImages[overlayIndex].startsWith('http')
-                              ? flutter.Image.network(
-                                  widget.overlayImages[overlayIndex],
-                                  fit: BoxFit.cover,
-                                )
-                              : flutter.Image.file(
-                                  File(widget.overlayImages[overlayIndex]),
-                                  fit: BoxFit.cover,
+                      if (isShowingTakenPhoto)
+                        // Show the last taken photo for 2 seconds
+                        if ((!widget.isBasicFrame || widget.grid == '4x1'))
+                          Positioned(
+                            top: -110,
+                            left: 0,
+                            right: 0,
+                            child: flutter.Image.file(
+                              File(takenPictures.last),
+                              fit: BoxFit.contain,
+                              width: MediaQuery.of(context).size.width,
+                              height: MediaQuery.of(context).size.height,
+                            ),
+                          ),
+                      if (isShowingTakenPhoto)
+                        if (widget.isBasicFrame && widget.grid == '2x2')
+                          Center(
+                            heightFactor: 2,
+                            child: flutter.Image.file(
+                              File(takenPictures.last),
+                              fit: BoxFit.contain,
+                              width: MediaQuery.of(context).size.width,
+                              height: MediaQuery.of(context).size.height,
+                            ),
+                          ),
+                      if (!isShowingTakenPhoto &&
+                          (!widget.isBasicFrame || widget.grid == '4x1'))
+                        Positioned(
+                          top: 160,
+                          left: 0,
+                          right: 0,
+                          child: AspectRatio(
+                            aspectRatio: 4 / 3,
+                            child: ClipRect(
+                              child: Transform.scale(
+                                  scale: _controller.value.aspectRatio / 3 * 4,
+                                  child: Center(
+                                    child: CameraPreview(_controller),
+                                  )),
+                            ),
+                          ),
+                        ),
+                      if (!isShowingTakenPhoto && !widget.isBasicFrame)
+                        Center(
+                          heightFactor: 2,
+                          child: AspectRatio(
+                            aspectRatio: 4 / 3,
+                            child: widget.overlayImages[overlayIndex]
+                                    .startsWith('http')
+                                ? flutter.Image.network(
+                                    widget.overlayImages[overlayIndex],
+                                    fit: BoxFit.cover,
+                                  )
+                                : flutter.Image.file(
+                                    File(widget.overlayImages[overlayIndex]),
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                        ),
+                      if (!isShowingTakenPhoto &&
+                          widget.isBasicFrame &&
+                          widget.grid == '2x2')
+                        Positioned(
+                          top: 100,
+                          left: 0,
+                          right: 0,
+                          child: AspectRatio(
+                            aspectRatio: 3 / 4,
+                            child: ClipRect(
+                              child: Transform.scale(
+                                scale: _controller.value.aspectRatio / 4 * 3,
+                                child: Center(
+                                  child: CameraPreview(_controller),
                                 ),
-                    ),
-                  ),
-                if (!isShowingTakenPhoto &&
-                    widget.isBasicFrame &&
-                    widget.grid == '2x2')
-                  Positioned(
-                    top: 100,
-                    left: 0,
-                    right: 0,
-                    child: AspectRatio(
-                      aspectRatio: 3 / 4,
-                      child: ClipRect(
-                        child: Transform.scale(
-                          scale: _controller.value.aspectRatio / 4 * 3,
-                          child: Center(
-                            child: CameraPreview(_controller),
+                              ),
+                            ),
+                          ),
+                        ),
+                      // Flash effect overlay
+                      if (isFlashing)
+                        AnimatedBuilder(
+                          animation: _flashAnimation,
+                          builder: (context, child) {
+                            return Container(
+                              color: Colors.white
+                                  .withOpacity(_flashAnimation.value),
+                            );
+                          },
+                        ),
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 85),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(height: 10),
+                              Container(
+                                padding: EdgeInsets.all(4),
+                                width: 70,
+                                height: 70,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: FloatingActionButton(
+                                  backgroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(45),
+                                  ),
+                                  onPressed: () {
+                                    takePhoto(); // Take photo immediately on button press
+                                    resetTimer();
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ),
-                  ),
-                // Flash effect overlay
-                if (isFlashing)
-                  AnimatedBuilder(
-                    animation: _flashAnimation,
-                    builder: (context, child) {
-                      return Container(
-                        color: Colors.white.withOpacity(_flashAnimation.value),
-                      );
-                    },
-                  ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 85),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(height: 10),
-                        Container(
-                          padding: EdgeInsets.all(4),
-                          width: 70,
-                          height: 70,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white,
-                              width: 2,
+                      Align(
+                          alignment: Alignment.bottomRight,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 85),
+                            child: Container(
+                              padding: EdgeInsets.all(4),
+                              width: 70,
+                              height: 70,
+                              child: IconButton(
+                                iconSize: 40,
+                                icon: Icon(Icons.flip_camera_ios_rounded,
+                                    color: Colors.white),
+                                onPressed: () {
+                                  toggleCamera(); // Call the toggleCamera method when the button is pressed
+                                },
+                              ),
                             ),
-                          ),
-                          child: FloatingActionButton(
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(45),
-                            ),
-                            onPressed: () {
-                              takePhoto(); // Take photo immediately on button press
-                              resetTimer();
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          } else {
-            return const Center(child: CircularProgressIndicator());
-          }
-        },
-      ),
+                          )),
+                    ],
+                  );
+                } else {
+                  return const Center(child: CircularProgressIndicator());
+                }
+              },
+            )
+          : const Center(child: Text('No cameras found')),
     );
   }
 
@@ -383,13 +439,8 @@ class _CameraScreenState extends State<CameraScreen>
     return newImageFile.path;
   }
 
-  img.Image flipImage(img.Image baseImage) {
-    img.Image flippedImage = img.flipHorizontal(baseImage);
-    return flippedImage;
-  }
-
   img.Image cropImage(img.Image baseImage, {String aspectRatio = '4:3'}) {
-    img.Image flippedImage = img.flipHorizontal(baseImage);
+    img.Image flippedImage = baseImage;
 
     int targetWidth, targetHeight;
     if (aspectRatio == '4:3') {
