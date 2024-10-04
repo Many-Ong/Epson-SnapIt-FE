@@ -32,103 +32,139 @@ class HomeScreen extends StatelessWidget {
         ),
         backgroundColor: Colors.black,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            SizedBox(height: 16),
-            largeButton(
-              context,
-              "assets/select_special.png",
-              "Football Special Frame",
-              "You can take 4-cut photos with special frame",
-              Color.fromARGB(255, 46, 184, 49),
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CameraScreen(
-                      overlayImages: [],
-                      isBasicFrame: true,
-                      isSpecialFrame: true,
-                      grid: '2x2',
+      body: SingleChildScrollView(
+        // Wrap with SingleChildScrollView to enable scrolling
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              largeButton(
+                context,
+                "assets/select_dongguk_frame.png",
+                "Dongguk Special Frame",
+                "You can take 4-cut photos with special frame",
+                Color.fromARGB(255, 248, 144, 31),
+                Color.fromARGB(255, 255, 177, 93),
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CameraScreen(
+                        overlayImages: [],
+                        isBasicFrame: true,
+                        isSpecialFrame: true,
+                        grid: '2x2',
+                        specialFrame: 'dongguk',
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-            SizedBox(height: 16),
-            largeButton(
-              context,
-              "assets/select_basic.png",
-              "4-cut 4x1",
-              "You can take 4-cut photos with simple, standard frame",
-              Colors.black,
-              () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CameraScreen(
-                      overlayImages: [],
-                      isBasicFrame: true,
-                      isSpecialFrame: false,
-                      grid: '4x1',
+                  );
+                },
+              ),
+              SizedBox(height: 16),
+              largeButton(
+                context,
+                "assets/select_special.png",
+                "Football Special Frame",
+                "You can take 4-cut photos with special frame",
+                Color.fromARGB(255, 46, 184, 49),
+                Colors.white,
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CameraScreen(
+                        overlayImages: [],
+                        isBasicFrame: true,
+                        isSpecialFrame: true,
+                        grid: '2x2',
+                        specialFrame: 'football',
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-            SizedBox(height: 16),
-            largeButton(
-              context,
-              "assets/select_2x2.png",
-              "4-cut 2x2",
-              "You can take 4-cut photos with 2x2 grid frame",
-              Colors.black,
-              () {
-                print("Basic Button Pressed"); // 첫 번째 버튼의 액션
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CameraScreen(
-                      overlayImages: [],
-                      isBasicFrame: true,
-                      isSpecialFrame: false,
-                      grid: '2x2',
+                  );
+                },
+              ),
+              SizedBox(height: 16),
+              largeButton(
+                context,
+                "assets/select_basic.png",
+                "4-cut 4x1",
+                "You can take 4-cut photos with simple, standard frame",
+                Colors.black,
+                Colors.white,
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CameraScreen(
+                        overlayImages: [],
+                        isBasicFrame: true,
+                        isSpecialFrame: false,
+                        grid: '4x1',
+                      ),
                     ),
-                  ),
-                );
-              },
-            ), // 버튼 사이의 간격
-          ],
+                  );
+                },
+              ),
+              SizedBox(height: 16),
+              largeButton(
+                context,
+                "assets/select_2x2.png",
+                "4-cut 2x2",
+                "You can take 4-cut photos with 2x2 grid frame",
+                Colors.black,
+                Colors.white,
+                () {
+                  print("Basic Button Pressed");
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CameraScreen(
+                        overlayImages: [],
+                        isBasicFrame: true,
+                        isSpecialFrame: false,
+                        grid: '2x2',
+                      ),
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: 48),
+            ],
+          ),
         ),
       ),
       backgroundColor: Colors.black,
     );
   }
 
-  Widget largeButton(BuildContext context, String imagePath, String title,
-      String subtitle, Color backgroundColor, VoidCallback onPressed) {
+  Widget largeButton(
+      BuildContext context,
+      String imagePath,
+      String title,
+      String subtitle,
+      Color backgroundColor,
+      Color imageBackgroundColor,
+      VoidCallback onPressed) {
     return InkWell(
       onTap: onPressed,
       child: Container(
-        padding: EdgeInsets.all(10), // 패딩
+        padding: EdgeInsets.all(10), // Padding
         width: 348,
-        height: 200, // 컨테이너 높이 설정
+        height: 200, // Container height
         decoration: BoxDecoration(
-          color: backgroundColor, // 배경 색상
-          borderRadius: BorderRadius.circular(12), // 컨테이너 모서리 둥글게
-          border: Border.all(color: Color(0xFF1F1F1F), width: 1), // 테두리 색상
+          color: backgroundColor, // Background color
+          borderRadius: BorderRadius.circular(12), // Rounded corners
+          border:
+              Border.all(color: Color(0xFF1F1F1F), width: 1), // Border color
         ),
         child: Row(
-          // Row 위젯으로 두 개의 열 생성
           children: <Widget>[
             Container(
               padding: EdgeInsets.all(5),
               width: 130,
               height: 189,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: imageBackgroundColor,
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Center(
@@ -136,7 +172,7 @@ class HomeScreen extends StatelessWidget {
                     width: 100,
                     height: 179,
                     imagePath,
-                    fit: BoxFit.contain), // 이미지
+                    fit: BoxFit.contain), // Image
               ),
             ),
             Expanded(
@@ -155,10 +191,10 @@ class HomeScreen extends StatelessWidget {
                             color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
-                    ), // 제목
+                    ), // Title
                   ),
                   Padding(
-                    padding: EdgeInsets.fromLTRB(20, 10, 20, 10), // 패딩을 주변에 적용
+                    padding: EdgeInsets.fromLTRB(20, 10, 20, 10), // Padding
                     child: Center(
                       child: Text(
                         subtitle,
@@ -167,7 +203,7 @@ class HomeScreen extends StatelessWidget {
                             fontWeight: FontWeight.w600,
                             color: Colors.white),
                       ),
-                    ), // 하위 텍스트
+                    ), // Subtitle
                   ),
                 ],
               ),

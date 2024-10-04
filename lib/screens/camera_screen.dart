@@ -14,6 +14,7 @@ class CameraScreen extends StatefulWidget {
   final bool isBasicFrame;
   final bool isSpecialFrame;
   final String grid;
+  final String? specialFrame;
 
   const CameraScreen({
     super.key,
@@ -21,6 +22,7 @@ class CameraScreen extends StatefulWidget {
     required this.isBasicFrame,
     required this.isSpecialFrame,
     required this.grid,
+    this.specialFrame,
   });
 
   @override
@@ -55,7 +57,7 @@ class _CameraScreenState extends State<CameraScreen>
     super.initState();
     initCameras(); // Initialize available cameras
     loadLogoImage();
-    loadFrameImage();
+    loadFrameImage(widget.specialFrame);
 
     // Initialize the flash animation controller
     _flashController = AnimationController(
@@ -87,8 +89,10 @@ class _CameraScreenState extends State<CameraScreen>
         dstX: duplicatedLogoWidth - logoImage.width, dstY: 0);
   }
 
-  Future<void> loadFrameImage() async {
-    ByteData frameData = await rootBundle.load('assets/frame_special_1.png');
+  Future<void> loadFrameImage(specialFrame) async {
+    ByteData frameData = specialFrame == 'dongguk'
+        ? await rootBundle.load('assets/frame_dongguk.png')
+        : await rootBundle.load('assets/frame_special_1.png');
     frame = img.decodeImage(frameData.buffer.asUint8List())!;
   }
 
