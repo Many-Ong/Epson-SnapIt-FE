@@ -90,9 +90,11 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   Future<void> loadFrameImage(specialFrame) async {
-    ByteData frameData = specialFrame == 'dongguk'
-        ? await rootBundle.load('assets/frame_dongguk.png')
-        : await rootBundle.load('assets/frame_special_1.png');
+    ByteData frameData = specialFrame == 'UNM'
+        ? await rootBundle.load('assets/unm_frame.png')
+        : specialFrame == 'klcc'
+            ? await rootBundle.load('assets/klcc_halloween_frame.png')
+            : await rootBundle.load('assets/frame_special_1.png');
     frame = img.decodeImage(frameData.buffer.asUint8List())!;
   }
 
