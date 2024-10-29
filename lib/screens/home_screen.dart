@@ -54,6 +54,7 @@ class HomeScreen extends StatelessWidget {
                         isBasicFrame: true,
                         isSpecialFrame: true,
                         grid: '2x2',
+                        isBackgroundRemovalNeeded: true,
                         specialFrame: 'apt',
                       ),
                     ),
