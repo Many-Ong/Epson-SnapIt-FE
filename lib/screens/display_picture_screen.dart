@@ -33,17 +33,17 @@ class DisplayPictureScreen extends StatefulWidget {
 
 class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   Color selectedFrameColor = Colors.white;
-  late Uint8List originalImageBytes; // Store the original image bytes
-  bool isLoading = false;
   img.Image frame = img.Image(0, 0);
+  String imageFilePath = '';
+  bool isProcessing = false;
 
   @override
   void initState() {
     super.initState();
     // Initialize the original image bytes
-    originalImageBytes =
-        Uint8List.fromList(img.encodePng(widget.mergedFourImage));
+  
     loadFrameImage();
+    createImageFile();
   }
 
   Future<void> loadFrameImage() async {
@@ -51,14 +51,19 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     frame = img.decodeImage(frameData.buffer.asUint8List())!;
   }
 
-  Future<String> createImageFile(Uint8List imageBytes) async {
+  Future<void> createImageFile() async {
+    setState(() {
+      isProcessing = true;
+    });
     // Create the framed image with the selected frame color
+    Uint8List imageBytes =
+        await Uint8List.fromList(img.encodePng(widget.mergedFourImage));
 
     if (widget.isSpecialFrame) {
       final tempDir = await getTemporaryDirectory();
       final tempFile = await File('${tempDir.path}/temp_image.png').create();
       await tempFile.writeAsBytes(img.encodePng(widget.mergedFourImage));
-      return tempFile.path;
+      imageFilePath = tempFile.path;
     }
 
     final framedImage =
@@ -67,7 +72,12 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
     final tempDir = await getTemporaryDirectory();
     final tempFile = await File('${tempDir.path}/temp_image.png').create();
     await tempFile.writeAsBytes(img.encodePng(framedImage));
-    return tempFile.path;
+    
+    imageFilePath = tempFile.path;
+
+    setState(() {
+      isProcessing = false;
+    });
   }
 
   // Function to apply frame color to the image
@@ -88,8 +98,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   }
 
   Future<void> saveImageToGallery() async {
-    String imageFilePath = await createImageFile(originalImageBytes);
-
     final result = await Permission.storage.request();
     if (result.isGranted) {
       final File imageFile = File(imageFilePath);
@@ -141,7 +149,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   }
 
   Future<void> saveImageToFirebaseStorage(BuildContext context) async {
-    String imageFilePath = await createImageFile(originalImageBytes);
     String? downloadUrl;
     try {
       showLoadingIndicator(context); // 로딩 인디케이터 표시
@@ -260,8 +267,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   }
 
   Future<void> shareImageToInstagramStory() async {
-    String imageFilePath = await createImageFile(originalImageBytes);
-
     await SocialShare.shareInstagramStory(
       appId: widget.appId,
       imagePath: imageFilePath,
@@ -271,8 +276,6 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
   }
 
   Future<void> shareImage() async {
-    String imageFilePath = await createImageFile(originalImageBytes);
-
     File imageFile = File(imageFilePath);
     final Uint8List imageBytes = imageFile.readAsBytesSync();
 
@@ -364,21 +367,17 @@ class _DisplayPictureScreenState extends State<DisplayPictureScreen> {
             Flexible(
               flex: 3,
               child: Center(
-                child: isLoading
-                    ? const Text('Loading...',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontFamily: 'Roboto'))
-                    : Container(
+                child: Container(
                         padding:
                             const EdgeInsets.all(2), // Padding for the frame
                         color: widget.isSpecialFrame
                             ? Colors.transparent
                             : selectedFrameColor,
-                        child: Image.memory(
-                          originalImageBytes,
-                          fit: BoxFit.cover,
+                        child: isProcessing
+                            ? CircularProgressIndicator()
+                            : Image.file(
+                          File(imageFilePath),
+                          fit: BoxFit.contain,
                         ),
                       ),
               ),
