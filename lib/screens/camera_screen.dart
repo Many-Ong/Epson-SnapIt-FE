@@ -148,7 +148,7 @@ class _CameraScreenState extends State<CameraScreen>
 
   void startTimer() {
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      if (_countdown == 0) {
+      if (_countdown == 1) {
         timer.cancel();
         takePhoto(); // Automatically take a photo when countdown reaches zero
       } else {
@@ -170,6 +170,11 @@ class _CameraScreenState extends State<CameraScreen>
     try {
       await _initializeControllerFuture;
       if (pictureCount < 4) {
+        // Trigger the flash effect
+        setState(() {
+          isFlashing = true;
+        });
+        _flashController.forward(from: 0);
         XFile image = await _controller.takePicture();
 
         // Flip the image horizontally if using the front camera
@@ -189,27 +194,7 @@ class _CameraScreenState extends State<CameraScreen>
         takenPictures.add(takenPicture);
         if (!widget.isBasicFrame) changeOverlayImage();
 
-        // Trigger the flash effect
-        setState(() {
-          isFlashing = true;
-        });
-        _flashController.forward(from: 0);
-
-        // Show the taken picture for 2 seconds
-        setState(() {
-          isShowingTakenPhoto = true; // Set flag to true to show taken photo
-        });
-
-        if (pictureCount != 3) {
-          // Display the image for 1 seconds
-          await Future.delayed(Duration(seconds: 1));
-        } else {
-          await Future.delayed(Duration(milliseconds: 200));
-        }
-
-        setState(() {
-          isShowingTakenPhoto = false; // Hide the taken photo and resume camera
-        });
+        // await Future.delayed(Duration(seconds: 200));
 
         img.Image mergedFourImage = !widget.isBasicFrame || widget.grid == '4x1'
             ? await mergeFourImages('4x1')
