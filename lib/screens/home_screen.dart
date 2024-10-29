@@ -40,6 +40,52 @@ class HomeScreen extends StatelessWidget {
             children: <Widget>[
               largeButton(
                 context,
+                "assets/select_apt_frame.png",
+                "APT Special Frame",
+                "You can take 4-cut photos with APT special frame",
+                Color.fromARGB(255, 245, 104, 142),
+                Color.fromARGB(100, 255, 255, 255),
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CameraScreen(
+                        overlayImages: [],
+                        isBasicFrame: true,
+                        isSpecialFrame: true,
+                        grid: '2x2',
+                        specialFrame: 'apt',
+                      ),
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: 16),
+              largeButton(
+                context,
+                "assets/select_halloween_frame.png",
+                "Halloween Special Frame",
+                "You can take 4-cut photos with Halloween special frame",
+                Color.fromARGB(255, 251, 146, 18),
+                Color.fromARGB(100, 255, 255, 255),
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CameraScreen(
+                        overlayImages: [],
+                        isBasicFrame: true,
+                        isSpecialFrame: true,
+                        grid: '2x2',
+                        specialFrame: 'halloween',
+                      ),
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: 16),
+              largeButton(
+                context,
                 "assets/select_unm_frame.png",
                 "UNM Special Frame",
                 "You can take 4-cut photos with UNM special frame",
@@ -55,29 +101,6 @@ class HomeScreen extends StatelessWidget {
                         isSpecialFrame: true,
                         grid: '2x2',
                         specialFrame: 'UNM',
-                      ),
-                    ),
-                  );
-                },
-              ),
-              SizedBox(height: 16),
-              largeButton(
-                context,
-                "assets/select_klcc_halloween_frame.png",
-                "KLCC Holloween Special Frame",
-                "You can take 4-cut photos with KLCC Halloween special frame",
-                Color.fromARGB(255, 5, 45, 102),
-                Color.fromARGB(100, 255, 255, 255),
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => CameraScreen(
-                        overlayImages: [],
-                        isBasicFrame: true,
-                        isSpecialFrame: true,
-                        grid: '2x2',
-                        specialFrame: 'klcc',
                       ),
                     ),
                   );
