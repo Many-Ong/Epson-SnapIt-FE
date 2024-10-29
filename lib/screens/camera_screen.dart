@@ -8,6 +8,7 @@ import 'package:image/image.dart' as img;
 import 'package:snapit/screens/display_picture_screen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:snapit/screens/confirm_photo_screen.dart';
 
 class CameraScreen extends StatefulWidget {
   final List<String> overlayImages;
@@ -15,6 +16,7 @@ class CameraScreen extends StatefulWidget {
   final bool isSpecialFrame;
   final String grid;
   final String? specialFrame;
+  final bool? isBackgroundRemovalNeeded;
 
   const CameraScreen({
     super.key,
@@ -22,6 +24,7 @@ class CameraScreen extends StatefulWidget {
     required this.isBasicFrame,
     required this.isSpecialFrame,
     required this.grid,
+    this.isBackgroundRemovalNeeded,
     this.specialFrame,
   });
 
@@ -40,6 +43,7 @@ class _CameraScreenState extends State<CameraScreen>
   img.Image logoImage = img.Image(0, 0);
   img.Image duplicatedLogoImage = img.Image(0, 0);
   img.Image frame = img.Image(0, 0);
+  img.Image backgroundImage = img.Image(0, 0);
   int selectedCameraIndex =
       0; // Track selected camera (starts with front camera)
 
@@ -58,6 +62,7 @@ class _CameraScreenState extends State<CameraScreen>
     initCameras(); // Initialize available cameras
     loadLogoImage();
     loadFrameImage(widget.specialFrame);
+    loadBackgroundImage();
 
     // Initialize the flash animation controller
     _flashController = AnimationController(
@@ -98,6 +103,11 @@ class _CameraScreenState extends State<CameraScreen>
                 ? await rootBundle.load('assets/frame_apt.png')
                 : await rootBundle.load('assets/frame_special_1.png');
     frame = img.decodeImage(frameData.buffer.asUint8List())!;
+  }
+
+  Future<void> loadBackgroundImage() async {
+    ByteData backgroundImageData = await rootBundle.load('assets/background_apt.png');
+    img.Image backgroundImage = img.decodeImage(backgroundImageData.buffer.asUint8List())!;
   }
 
   Future<void> initCameras() async {
@@ -207,15 +217,29 @@ class _CameraScreenState extends State<CameraScreen>
             startTimer(); // Restart the timer
           });
         } else {
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => DisplayPictureScreen(
-                mergedFourImage: mergedFourImage,
-                isSpecialFrame: widget.isSpecialFrame,
-                context: context,
+          if(widget.isBackgroundRemovalNeeded == true) {
+            // Remove the background from the merged image
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ConfirmPhotoScreen(
+                  takenPictures: takenPictures,
+                  backgroundImage: backgroundImage,
+                  frame: frame,
+                  context: context,
+                )
               ),
-            ),
-          );
+            );
+          } else {
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => DisplayPictureScreen(
+                  mergedFourImage: mergedFourImage,
+                  isSpecialFrame: widget.isSpecialFrame,
+                  context: context,
+                ),
+              ),
+            );
+          }
           pictureCount = 0;
           takenPictures.clear();
           resetTimer(); // Reset the timer after the last photo
