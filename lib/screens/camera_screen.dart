@@ -225,6 +225,7 @@ class _CameraScreenState extends State<CameraScreen>
                   takenPictures: takenPictures,
                   backgroundImage: backgroundImage,
                   frame: frame,
+                  context: context,
                 )
               ),
             );

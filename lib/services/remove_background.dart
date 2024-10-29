@@ -18,20 +18,15 @@ class RemoveBackground {
   }
 
   Future<String> removeBackground(String imagePath) async {
-    try {
-      LocalRembgResultModel localRembgResultModel =
-          await LocalRembg.removeBackground(imagePath: imagePath);
-      if (localRembgResultModel.status == 1) {
-        Uint8List imageBytes =
-            Uint8List.fromList(localRembgResultModel.imageBytes!);
-        String imageUrl = await _saveImageToFileSystem(imageBytes);
-        return imageUrl;
-      } else {
-        throw Exception(
-            'Background removal failed: ${localRembgResultModel.errorMessage}');
-      }
-    } catch (e) {
-        return '';
+    LocalRembgResultModel localRembgResultModel =
+        await LocalRembg.removeBackground(imagePath: imagePath);
+    if (localRembgResultModel.status == 1) {
+      Uint8List imageBytes =
+          Uint8List.fromList(localRembgResultModel.imageBytes!);
+      String imageUrl = await _saveImageToFileSystem(imageBytes);
+      return imageUrl;
+    } else {
+      return imagePath;
     }
   }
 }

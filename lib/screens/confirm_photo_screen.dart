@@ -7,6 +7,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:typed_data';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:snapit/utils/share_download.dart';
+import 'package:snapit/screens/home_screen.dart';
 
 class ConfirmPhotoScreen extends StatefulWidget {
   final List<String> takenPictures;
@@ -18,6 +21,7 @@ class ConfirmPhotoScreen extends StatefulWidget {
     required this.takenPictures,
     required this.backgroundImage,
     required this.frame,
+    required BuildContext context,
   });
 
   @override
@@ -31,10 +35,12 @@ class _ConfirmPhotoScreenState extends State<ConfirmPhotoScreen> {
   bool isProcessing = false;
   img.Image finalImage = img.Image(0, 0);
   String finalImagePath = '';
+  late String appId;
 
   @override
   void initState() {
     super.initState();
+    appId = dotenv.env['APP_ID'] ?? '';
     _processImages();
   }
 
@@ -75,18 +81,130 @@ class _ConfirmPhotoScreenState extends State<ConfirmPhotoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        title: Text('Confirm Photos'),
-        backgroundColor: Colors.black,
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.close,
+              color: Colors.white,
+              size: 28,
+            ),
+            onPressed: () async {
+              bool exit = await onWillPop(context);
+              if (exit) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (context) => HomeScreen(
+                            camerasAvailable: true,
+                          )),
+                  (Route<dynamic> route) => false,
+                );
+              }
+            },
+          ),
+        ],
       ),
-      body: Center(
-        child: isProcessing
-            ? CircularProgressIndicator()  // Show a loading indicator while processing
-            : Image.file(
-                    File(finalImagePath),  // Display the saved image
-                    fit: BoxFit.cover,
-                  )
-                
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Flexible(
+              flex: 3,
+              child: Center(
+                child: isProcessing
+                        ? CircularProgressIndicator()
+                        : Container(
+                        padding: const EdgeInsets.all(20),
+                        color: Colors.transparent,
+                        child: Center(
+                          child: Image.file(
+                          File(finalImagePath),
+                          fit: BoxFit.contain,
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          ),
+                        )
+                      ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: isProcessing ? [const SizedBox(height: 20)] :
+        [
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white, width: 3),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: FloatingActionButton(
+              backgroundColor: Colors.transparent,
+              onPressed: () => saveImageToGallery(context, finalImagePath),
+              child: const Icon(
+                Icons.download,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white, width: 3),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: FloatingActionButton(
+              backgroundColor: Colors.transparent,
+              onPressed: () => checkAndShareImageToInstagramStory(finalImagePath, appId, context),
+              child: Image.asset(
+                'assets/instagram_icon_bw.png',
+                width: 28,
+                height: 28,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white, width: 3),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: FloatingActionButton(
+              backgroundColor: Colors.transparent,
+              onPressed: () => shareImage(finalImagePath, appId),
+              child: const Icon(
+                Icons.share,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.white, width: 3),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: FloatingActionButton(
+              backgroundColor: Colors.transparent,
+              onPressed: () async {
+                await saveImageToFirebaseStorage(context, finalImagePath); // 비동기 함수를 호출
+              },
+              child: const Icon(
+                Icons.qr_code,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
