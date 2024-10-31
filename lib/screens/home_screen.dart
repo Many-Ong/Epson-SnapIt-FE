@@ -67,8 +67,8 @@ class HomeScreen extends StatelessWidget {
                 "assets/select_halloween_frame.png",
                 "Halloween Special Frame",
                 "You can take 4-cut photos with Halloween special frame",
-                Color.fromARGB(255, 251, 146, 18),
-                Color.fromARGB(100, 255, 255, 255),
+                Color.fromARGB(0, 0, 0, 18),
+                Color.fromARGB(80, 255, 255, 255),
                 () {
                   Navigator.push(
                     context,
@@ -201,8 +201,9 @@ class HomeScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: backgroundColor, // Background color
           borderRadius: BorderRadius.circular(12), // Rounded corners
-          border:
-              Border.all(color: Color(0xFF1F1F1F), width: 1), // Border color
+          border: Border.all(
+              color: Color.fromARGB(100, 168, 167, 167),
+              width: 1), // Border color
         ),
         child: Row(
           children: <Widget>[
@@ -228,7 +229,7 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Padding(
-                    padding: EdgeInsets.fromLTRB(20, 10, 20, 10),
+                    padding: EdgeInsets.fromLTRB(40, 10, 20, 10),
                     child: Center(
                       child: Text(
                         title,
